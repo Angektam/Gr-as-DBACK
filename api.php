@@ -25,31 +25,54 @@ if ($conn->connect_error) {
     die(json_encode(['error' => "Error de conexión: " . $conn->connect_error]));
 }
 
-// Función para obtener todas las grúas
+// Función para obtener todas las grúas (con prepared statements)
 function getGruas($conn, $filtroEstado = 'all', $filtroTipo = 'all', $busqueda = '') {
     $sql = "SELECT * FROM gruas WHERE 1=1";
+    $params = [];
+    $types = '';
     
     if ($filtroEstado != 'all') {
-        $sql .= " AND Estado = '" . $conn->real_escape_string($filtroEstado) . "'";
+        $sql .= " AND Estado = ?";
+        $params[] = $filtroEstado;
+        $types .= 's';
     }
     
     if ($filtroTipo != 'all') {
-        $sql .= " AND Tipo = '" . $conn->real_escape_string($filtroTipo) . "'";
+        $sql .= " AND Tipo = ?";
+        $params[] = $filtroTipo;
+        $types .= 's';
     }
     
     if (!empty($busqueda)) {
-        $sql .= " AND (Placa LIKE '%" . $conn->real_escape_string($busqueda) . "%' OR Modelo LIKE '%" . $conn->real_escape_string($busqueda) . "%')";
+        $busqueda_like = '%' . $busqueda . '%';
+        $sql .= " AND (Placa LIKE ? OR Modelo LIKE ?)";
+        $params[] = $busqueda_like;
+        $params[] = $busqueda_like;
+        $types .= 'ss';
     }
     
     $sql .= " ORDER BY ID DESC";
     
-    $result = $conn->query($sql);
-    $gruas = array();
+    $stmt = $conn->prepare($sql);
+    if ($stmt && !empty($params)) {
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    } else if ($stmt) {
+        $result = $stmt->execute() ? $stmt->get_result() : null;
+    } else {
+        $result = $conn->query($sql);
+    }
     
-    if ($result->num_rows > 0) {
+    $gruas = array();
+    if ($result && $result->num_rows > 0) {
         while($row = $result->fetch_assoc()) {
             $gruas[] = $row;
         }
+    }
+    
+    if (isset($stmt)) {
+        $stmt->close();
     }
     
     return $gruas;
@@ -74,14 +97,21 @@ if (isset($_GET['action'])) {
                 }
                 
                 $id = intval($_GET['id']);
-                $sql = "SELECT * FROM gruas WHERE ID = $id";
-                $result = $conn->query($sql);
+                if ($id <= 0) {
+                    throw new Exception("ID de grúa inválido");
+                }
+                
+                $stmt = $conn->prepare("SELECT * FROM gruas WHERE ID = ?");
+                $stmt->bind_param("i", $id);
+                $stmt->execute();
+                $result = $stmt->get_result();
                 
                 if ($result->num_rows > 0) {
                     $response['grua'] = $result->fetch_assoc();
                 } else {
                     throw new Exception("Grúa no encontrada");
                 }
+                $stmt->close();
                 break;
                 
             case 'saveGrua':
@@ -107,41 +137,57 @@ if (isset($_GET['action'])) {
                     throw new Exception("La placa debe tener exactamente 7 caracteres");
                 }
                 
+                require_once 'utils/validaciones.php';
+                $validador = new Validador();
+                
                 $id = isset($_POST['id']) ? intval($_POST['id']) : null;
-                $placa = $conn->real_escape_string($_POST['placa']);
-                $marca = $conn->real_escape_string($_POST['marca']);
-                $modelo = $conn->real_escape_string($_POST['modelo']);
-                $tipo = $conn->real_escape_string($_POST['tipo']);
-                $estado = $conn->real_escape_string($_POST['estado']);
+                $placa = Validador::sanitizar($_POST['placa'] ?? '', 'string');
+                $marca = Validador::sanitizar($_POST['marca'] ?? '', 'string');
+                $modelo = Validador::sanitizar($_POST['modelo'] ?? '', 'string');
+                $tipo = Validador::sanitizar($_POST['tipo'] ?? '', 'string');
+                $estado = Validador::sanitizar($_POST['estado'] ?? '', 'string');
+                
+                // Validaciones
+                $validador->requerido($placa, 'placa', 'La placa es requerida');
+                $validador->longitud($placa, 'placa', 5, 10);
+                $validador->requerido($marca, 'marca', 'La marca es requerida');
+                $validador->longitud($marca, 'marca', 1, 50);
+                $validador->requerido($modelo, 'modelo', 'El modelo es requerido');
+                $validador->longitud($modelo, 'modelo', 1, 50);
+                $validador->requerido($tipo, 'tipo', 'El tipo es requerido');
+                $validador->requerido($estado, 'estado', 'El estado es requerido');
+                
+                $estados_validos = ['disponible', 'en_uso', 'mantenimiento', 'inactiva'];
+                if (!in_array($estado, $estados_validos)) {
+                    $validador->agregarError('estado', 'Estado no válido');
+                }
+                
+                if ($validador->tieneErrores()) {
+                    throw new Exception("Errores de validación: " . $validador->obtenerErroresString(', '));
+                }
                 
                 if ($id) {
                     // Actualizar grúa existente
-                    $sql = "UPDATE gruas SET 
-                            Placa = '$placa',
-                            Marca = '$marca',
-                            Modelo = '$modelo',
-                            Tipo = '$tipo',
-                            Estado = '$estado',
+                    $stmt = $conn->prepare("UPDATE gruas SET 
+                            Placa = ?, Marca = ?, Modelo = ?, Tipo = ?, Estado = ?,
                             FechaActualizacion = CURRENT_TIMESTAMP
-                            WHERE ID = $id";
+                            WHERE ID = ?");
+                    $stmt->bind_param("sssssi", $placa, $marca, $modelo, $tipo, $estado, $id);
                 } else {
                     // Insertar nueva grúa
-                    $sql = "INSERT INTO gruas (Placa, Marca, Modelo, Tipo, Estado) VALUES (
-                            '$placa',
-                            '$marca',
-                            '$modelo',
-                            '$tipo',
-                            '$estado')";
+                    $stmt = $conn->prepare("INSERT INTO gruas (Placa, Marca, Modelo, Tipo, Estado) VALUES (?, ?, ?, ?, ?)");
+                    $stmt->bind_param("sssss", $placa, $marca, $modelo, $tipo, $estado);
                 }
                 
-                if ($conn->query($sql)) {
+                if ($stmt->execute()) {
                     $response['success'] = true;
                     if (!$id) {
                         $response['id'] = $conn->insert_id;
                     }
                 } else {
-                    throw new Exception("Error al guardar: " . $conn->error);
+                    throw new Exception("Error al guardar: " . $stmt->error);
                 }
+                $stmt->close();
                 break;
                 
             case 'deleteGrua':
@@ -150,13 +196,19 @@ if (isset($_GET['action'])) {
                 }
                 
                 $id = intval($_GET['id']);
-                $sql = "DELETE FROM gruas WHERE ID = $id";
+                if ($id <= 0) {
+                    throw new Exception("ID de grúa inválido");
+                }
                 
-                if ($conn->query($sql)) {
+                $stmt = $conn->prepare("DELETE FROM gruas WHERE ID = ?");
+                $stmt->bind_param("i", $id);
+                
+                if ($stmt->execute()) {
                     $response['success'] = true;
                 } else {
-                    throw new Exception("Error al eliminar: " . $conn->error);
+                    throw new Exception("Error al eliminar: " . $stmt->error);
                 }
+                $stmt->close();
                 break;
                 
             case 'getMantenimientos':

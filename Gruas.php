@@ -5,7 +5,7 @@
  */
 
 require_once 'conexion.php';
-// La sesión ya se inicia en config.php
+require_once 'utils/validaciones.php';
 
 // Verificar sesión
 if (!isset($_SESSION['usuario_id'])) {
@@ -13,80 +13,147 @@ if (!isset($_SESSION['usuario_id'])) {
     exit();
 }
 
+// Generar token CSRF
+$csrf_token = generarCSRF();
+
 $mensaje = '';
 $tipo_mensaje = '';
 
 // ==================== PROCESAR ACCIONES ====================
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
-    
-    // AGREGAR GRÚA
-    if ($action === 'add') {
-        $placa = strtoupper($conn->real_escape_string(trim($_POST['placa'])));
-        $marca = $conn->real_escape_string(trim($_POST['marca']));
-        $modelo = $conn->real_escape_string(trim($_POST['modelo']));
-        $tipo = $conn->real_escape_string($_POST['tipo']);
-        $estado = $conn->real_escape_string($_POST['estado']);
+    // Validar token CSRF
+    $token_recibido = $_POST['csrf_token'] ?? '';
+    if (!validarCSRF($token_recibido)) {
+        $tipo_mensaje = 'error';
+        $mensaje = '❌ Error de seguridad: token inválido. Por favor, recarga la página.';
+    } else {
+        $action = $_POST['action'] ?? '';
+        $validador = new Validador();
         
-        $query = "INSERT INTO gruas (Placa, Marca, Modelo, Tipo, Estado) VALUES (?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param("sssss", $placa, $marca, $modelo, $tipo, $estado);
-        
-        if ($stmt->execute()) {
-            $tipo_mensaje = 'success';
-            $mensaje = '✅ Grúa agregada exitosamente';
-        } else {
-            $tipo_mensaje = 'error';
-            $mensaje = '❌ Error al agregar grúa: ' . $conn->error;
+        // AGREGAR GRÚA
+        if ($action === 'add') {
+            $placa = Validador::sanitizar($_POST['placa'] ?? '', 'string');
+            $marca = Validador::sanitizar($_POST['marca'] ?? '', 'string');
+            $modelo = Validador::sanitizar($_POST['modelo'] ?? '', 'string');
+            $tipo = Validador::sanitizar($_POST['tipo'] ?? '', 'string');
+            $estado = Validador::sanitizar($_POST['estado'] ?? '', 'string');
+            
+            $placa = strtoupper(trim($placa));
+            
+            // Validaciones
+            $validador->requerido($placa, 'placa', 'La placa es requerida');
+            $validador->longitud($placa, 'placa', 5, 10);
+            $validador->requerido($marca, 'marca', 'La marca es requerida');
+            $validador->longitud($marca, 'marca', 1, 50);
+            $validador->requerido($modelo, 'modelo', 'El modelo es requerido');
+            $validador->longitud($modelo, 'modelo', 1, 50);
+            $validador->requerido($tipo, 'tipo', 'El tipo es requerido');
+            $validador->requerido($estado, 'estado', 'El estado es requerido');
+            
+            $estados_validos = ['disponible', 'en_uso', 'mantenimiento', 'inactiva'];
+            if (!in_array($estado, $estados_validos)) {
+                $validador->agregarError('estado', 'Estado no válido');
+            }
+            
+            if (!$validador->tieneErrores()) {
+                $query = "INSERT INTO gruas (Placa, Marca, Modelo, Tipo, Estado) VALUES (?, ?, ?, ?, ?)";
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param("sssss", $placa, $marca, $modelo, $tipo, $estado);
+                
+                if ($stmt->execute()) {
+                    $tipo_mensaje = 'success';
+                    $mensaje = '✅ Grúa agregada exitosamente';
+                } else {
+                    $tipo_mensaje = 'error';
+                    $mensaje = '❌ Error al agregar grúa: ' . $stmt->error;
+                }
+                $stmt->close();
+            } else {
+                $tipo_mensaje = 'error';
+                $mensaje = '❌ Errores de validación: ' . $validador->obtenerErroresString(', ');
+            }
         }
-    }
-    
-    // EDITAR GRÚA
-    elseif ($action === 'edit') {
-        $id = intval($_POST['id']);
-        $placa = strtoupper($conn->real_escape_string(trim($_POST['placa'])));
-        $marca = $conn->real_escape_string(trim($_POST['marca']));
-        $modelo = $conn->real_escape_string(trim($_POST['modelo']));
-        $tipo = $conn->real_escape_string($_POST['tipo']);
-        $estado = $conn->real_escape_string($_POST['estado']);
         
-        $query = "UPDATE gruas SET Placa=?, Marca=?, Modelo=?, Tipo=?, Estado=? WHERE ID=?";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param("sssssi", $placa, $marca, $modelo, $tipo, $estado, $id);
-        
-        if ($stmt->execute()) {
-            $tipo_mensaje = 'success';
-            $mensaje = '✅ Grúa actualizada exitosamente';
-        } else {
-            $tipo_mensaje = 'error';
-            $mensaje = '❌ Error al actualizar grúa';
+        // EDITAR GRÚA
+        elseif ($action === 'edit') {
+            $id = intval($_POST['id'] ?? 0);
+            if ($id <= 0) {
+                $tipo_mensaje = 'error';
+                $mensaje = '❌ ID de grúa inválido';
+            } else {
+                $placa = Validador::sanitizar($_POST['placa'] ?? '', 'string');
+                $marca = Validador::sanitizar($_POST['marca'] ?? '', 'string');
+                $modelo = Validador::sanitizar($_POST['modelo'] ?? '', 'string');
+                $tipo = Validador::sanitizar($_POST['tipo'] ?? '', 'string');
+                $estado = Validador::sanitizar($_POST['estado'] ?? '', 'string');
+                
+                $placa = strtoupper(trim($placa));
+                
+                // Validaciones
+                $validador->requerido($placa, 'placa', 'La placa es requerida');
+                $validador->longitud($placa, 'placa', 5, 10);
+                $validador->requerido($marca, 'marca', 'La marca es requerida');
+                $validador->longitud($marca, 'marca', 1, 50);
+                $validador->requerido($modelo, 'modelo', 'El modelo es requerido');
+                $validador->longitud($modelo, 'modelo', 1, 50);
+                $validador->requerido($tipo, 'tipo', 'El tipo es requerido');
+                $validador->requerido($estado, 'estado', 'El estado es requerido');
+                
+                $estados_validos = ['disponible', 'en_uso', 'mantenimiento', 'inactiva'];
+                if (!in_array($estado, $estados_validos)) {
+                    $validador->agregarError('estado', 'Estado no válido');
+                }
+                
+                if (!$validador->tieneErrores()) {
+                    $query = "UPDATE gruas SET Placa=?, Marca=?, Modelo=?, Tipo=?, Estado=? WHERE ID=?";
+                    $stmt = $conn->prepare($query);
+                    $stmt->bind_param("sssssi", $placa, $marca, $modelo, $tipo, $estado, $id);
+                    
+                    if ($stmt->execute()) {
+                        $tipo_mensaje = 'success';
+                        $mensaje = '✅ Grúa actualizada exitosamente';
+                    } else {
+                        $tipo_mensaje = 'error';
+                        $mensaje = '❌ Error al actualizar grúa: ' . $stmt->error;
+                    }
+                    $stmt->close();
+                } else {
+                    $tipo_mensaje = 'error';
+                    $mensaje = '❌ Errores de validación: ' . $validador->obtenerErroresString(', ');
+                }
+            }
         }
-    }
-    
-    // ELIMINAR GRÚA
-    elseif ($action === 'delete') {
-        $id = intval($_POST['id']);
         
-        $query = "DELETE FROM gruas WHERE ID=?";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param("i", $id);
-        
-        if ($stmt->execute()) {
-            $tipo_mensaje = 'success';
-            $mensaje = '✅ Grúa eliminada exitosamente';
-        } else {
-            $tipo_mensaje = 'error';
-            $mensaje = '❌ Error al eliminar grúa';
+        // ELIMINAR GRÚA
+        elseif ($action === 'delete') {
+            $id = intval($_POST['id'] ?? 0);
+            if ($id <= 0) {
+                $tipo_mensaje = 'error';
+                $mensaje = '❌ ID de grúa inválido';
+            } else {
+                $query = "DELETE FROM gruas WHERE ID=?";
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param("i", $id);
+                
+                if ($stmt->execute()) {
+                    $tipo_mensaje = 'success';
+                    $mensaje = '✅ Grúa eliminada exitosamente';
+                } else {
+                    $tipo_mensaje = 'error';
+                    $mensaje = '❌ Error al eliminar grúa: ' . $stmt->error;
+                }
+                $stmt->close();
+            }
         }
     }
 }
 
 // ==================== FILTROS Y BÚSQUEDA ====================
 
-$busqueda = isset($_GET['busqueda']) ? $conn->real_escape_string(trim($_GET['busqueda'])) : '';
-$filtro_tipo = isset($_GET['tipo']) ? $conn->real_escape_string($_GET['tipo']) : '';
-$filtro_estado = isset($_GET['estado']) ? $conn->real_escape_string($_GET['estado']) : '';
+$busqueda = isset($_GET['busqueda']) ? Validador::sanitizar(trim($_GET['busqueda']), 'string') : '';
+$filtro_tipo = isset($_GET['tipo']) ? Validador::sanitizar($_GET['tipo'], 'string') : '';
+$filtro_estado = isset($_GET['estado']) ? Validador::sanitizar($_GET['estado'], 'string') : '';
 
 // ==================== PAGINACIÓN ====================
 
@@ -356,6 +423,7 @@ while ($row = $tipos_result->fetch_assoc()) {
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
                 <form id="gruaForm" method="POST">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
                     <div class="modal-body">
                         <input type="hidden" name="action" id="formAction" value="add">
                         <input type="hidden" name="id" id="gruaId">

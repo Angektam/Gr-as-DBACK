@@ -1,6 +1,17 @@
 <?php
-require 'conexion.php';
+require_once 'conexion.php';
+require_once 'utils/validaciones.php';
+
 header('Content-Type: application/json');
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
+// Manejar solicitudes OPTIONS para CORS
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -8,58 +19,91 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$data = json_decode(file_get_contents("php://input"), true);
-
-function sanitize($str) {
-    return htmlspecialchars(strip_tags(trim($str)));
+// Verificar conexión
+if (!isset($conn) || $conn->connect_error) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Error de conexión a la base de datos']);
+    exit;
 }
 
-// --- Sanitización y validación ---
-$nombre = sanitize($data['nombre'] ?? '');
-$telefono = isset($data['telefono']) && is_numeric($data['telefono']) ? (int)$data['telefono'] : null;
-$email = trim($data['email'] ?? '') ?: null;
-$ubicacion_origen = sanitize($data['ubicacion_origen'] ?? '');
-$ubicacion_destino = sanitize($data['ubicacion_destino'] ?? '');
-$tipo_vehiculo = $data['tipo_vehiculo'] ?? 'Baica';
-$marca = sanitize($data['marca'] ?? '');
-$modelo = sanitize($data['modelo'] ?? '');
-$placa = sanitize($data['placa'] ?? '');
-$tipo_servicio = sanitize($data['tipo_servicio'] ?? '');
-$descripcion = sanitize($data['descripcion'] ?? '');
-$distancia = trim($data['distancia'] ?? '') ?: null;
-$costo = isset($data['costo']) && is_numeric($data['costo']) ? $data['costo'] : null;
-$metodo_pago = $data['metodo_pago'] ?? 'Efectivo';
+// Leer y validar JSON
+$raw_input = file_get_contents("php://input");
+$data = json_decode($raw_input, true);
+
+if (json_last_error() !== JSON_ERROR_NONE) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'JSON inválido']);
+    exit;
+}
+
+// Crear instancia del validador
+$validador = new Validador();
+
+// Sanitizar y validar datos
+$nombre = Validador::sanitizar($data['nombre'] ?? '', 'string');
+$telefono = Validador::sanitizar($data['telefono'] ?? '', 'string');
+$email = Validador::sanitizar($data['email'] ?? '', 'email');
+$ubicacion_origen = Validador::sanitizar($data['ubicacion_origen'] ?? '', 'string');
+$ubicacion_destino = Validador::sanitizar($data['ubicacion_destino'] ?? '', 'string');
+$tipo_vehiculo = Validador::sanitizar($data['tipo_vehiculo'] ?? 'Baica', 'string');
+$marca = Validador::sanitizar($data['marca'] ?? '', 'string');
+$modelo = Validador::sanitizar($data['modelo'] ?? '', 'string');
+$placa = Validador::sanitizar($data['placa'] ?? '', 'string');
+$tipo_servicio = Validador::sanitizar($data['tipo_servicio'] ?? '', 'string');
+$descripcion = Validador::sanitizar($data['descripcion'] ?? '', 'string');
+$distancia = Validador::sanitizar($data['distancia'] ?? '0', 'string');
+$costo_raw = $data['costo'] ?? '0';
+$costo_clean = preg_replace('/[^0-9.]/', '', $costo_raw);
+$costo = floatval($costo_clean);
+$metodo_pago = Validador::sanitizar($data['metodo_pago'] ?? 'Efectivo', 'string');
 $consentimiento = isset($data['consentimiento']) && $data['consentimiento'] == true ? 1 : 0;
 
-// --- Validaciones básicas ---
-if (
-    empty($nombre) || $telefono === null || empty($ubicacion_origen) || 
-    empty($ubicacion_destino) || empty($tipo_servicio) || empty($descripcion)
-) {
-    echo json_encode(['success' => false, 'message' => 'Todos los campos obligatorios deben ser completados']);
-    exit;
+// Aplicar validaciones
+$validador->validarNombre($nombre, 'nombre', 2, 50, true);
+$validador->validarTelefono($telefono, 'telefono', true);
+if (!empty($email)) {
+    $validador->validarEmail($email, 'email', false);
 }
+$validador->requerido($ubicacion_origen, 'ubicacion_origen', 'La ubicación de origen es requerida');
+$validador->longitud($ubicacion_origen, 'ubicacion_origen', 5, 200);
+$validador->requerido($ubicacion_destino, 'ubicacion_destino', 'La ubicación de destino es requerida');
+$validador->longitud($ubicacion_destino, 'ubicacion_destino', 5, 200);
+$validador->longitud($marca, 'marca', 1, 50);
+$validador->longitud($modelo, 'modelo', 1, 50);
+$validador->longitud($placa, 'placa', 0, 20);
+$validador->requerido($tipo_servicio, 'tipo_servicio', 'El tipo de servicio es requerido');
+$validador->longitud($descripcion, 'descripcion', 10, 500);
+$validador->validarNumero($costo, 'costo', 0, 999999);
+$validador->validarNumero(floatval(preg_replace('/[^0-9.]/', '', $distancia)), 'distancia', 0, 9999);
 
-if ($email && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    echo json_encode(['success' => false, 'message' => 'Formato de email inválido.']);
-    exit;
-}
-
-$vehiculos_validos = ['Baica', 'Automóvil', 'Camioneta', 'Motocicleta', 'Autobus', 'Submarino'];
+// Validar valores permitidos
+$vehiculos_validos = ['Baica', 'Automóvil', 'Camioneta', 'Motocicleta', 'Autobus', 'Otro'];
 if (!in_array($tipo_vehiculo, $vehiculos_validos)) {
-    echo json_encode(['success' => false, 'message' => 'Tipo de vehículo no válido']);
-    exit;
+    $validador->agregarError('tipo_vehiculo', 'Tipo de vehículo no válido');
 }
 
-$metodos_validos = ['Efectivo', 'PayPal'];
+$tipos_servicio_validos = ['remolque', 'bateria', 'gasolina', 'llanta', 'arranque', 'mecanica'];
+if (!in_array($tipo_servicio, $tipos_servicio_validos)) {
+    $validador->agregarError('tipo_servicio', 'Tipo de servicio no válido');
+}
+
+$metodos_validos = ['Efectivo', 'PayPal', 'Tarjeta', 'OXXO'];
 if (!in_array($metodo_pago, $metodos_validos)) {
-    echo json_encode(['success' => false, 'message' => 'Método de pago no válido']);
-    exit;
+    $validador->agregarError('metodo_pago', 'Método de pago no válido');
 }
 
-// --- Validaciones de longitud opcionales ---
-if (strlen($nombre) > 100 || strlen($marca) > 100 || strlen($modelo) > 100) {
-    echo json_encode(['success' => false, 'message' => 'Uno de los campos de texto es demasiado largo']);
+if ($consentimiento != 1) {
+    $validador->agregarError('consentimiento', 'Debes aceptar el consentimiento de datos');
+}
+
+// Si hay errores, retornarlos
+if ($validador->tieneErrores()) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Errores de validación',
+        'errors' => $validador->obtenerErrores()
+    ]);
     exit;
 }
 
@@ -111,46 +155,51 @@ if (!empty($data['foto_vehiculo'])) {
     }
 }
 
-// --- Insertar en base de datos ---
+// --- Insertar en base de datos usando prepared statements ---
+$distancia_km = floatval(preg_replace('/[^0-9.]/', '', $distancia));
+$ip_cliente = $_SERVER['REMOTE_ADDR'] ?? '';
+$user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+
 try {
-    $stmt = $pdo->prepare("
-        INSERT INTO solicitudes_servicio 
-        (nombre, telefono, email, ubicacion_origen, ubicacion_destino, tipo_vehiculo, marca, modelo, placa, 
-         foto_vehiculo, tipo_servicio, descripcion, distancia, costo, metodo_pago, consentimiento)
-        VALUES 
-        (:nombre, :telefono, :email, :ubicacion_origen, :ubicacion_destino, :tipo_vehiculo, :marca, :modelo, :placa,
-         :foto_vehiculo, :tipo_servicio, :descripcion, :distancia, :costo, :metodo_pago, :consentimiento)
-    ");
+    $stmt = $conn->prepare("INSERT INTO solicitudes (
+        nombre_completo, telefono, email, ubicacion, ubicacion_destino, tipo_vehiculo, marca_vehiculo, modelo_vehiculo, 
+        foto_vehiculo, tipo_servicio, descripcion_problema, urgencia, distancia_km, costo_estimado, 
+        consentimiento_datos, ip_cliente, user_agent
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    
+    $urgencia = 'normal'; // Valor por defecto
+    $foto_nombre = $foto_vehiculo ? basename($foto_vehiculo) : '';
+    
+    $stmt->bind_param("ssssssssssssddisss",
+        $nombre, $telefono, $email, $ubicacion_origen, $ubicacion_destino,
+        $tipo_vehiculo, $marca, $modelo, $foto_nombre,
+        $tipo_servicio, $descripcion, $urgencia, $distancia_km, $costo,
+        $consentimiento, $ip_cliente, $user_agent
+    );
 
-    $stmt->execute([
-        ':nombre' => $nombre,
-        ':telefono' => $telefono,
-        ':email' => $email ?: null,
-        ':ubicacion_origen' => $ubicacion_origen,
-        ':ubicacion_destino' => $ubicacion_destino,
-        ':tipo_vehiculo' => $tipo_vehiculo,
-        ':marca' => $marca,
-        ':modelo' => $modelo,
-        ':placa' => $placa,
-        ':foto_vehiculo' => $foto_vehiculo,
-        ':tipo_servicio' => $tipo_servicio,
-        ':descripcion' => $descripcion,
-        ':distancia' => $distancia ?: null,
-        ':costo' => $costo ?: null,
-        ':metodo_pago' => $metodo_pago,
-        ':consentimiento' => $consentimiento,
-    ]);
+    if ($stmt->execute()) {
+        $folio = $conn->insert_id;
+        $stmt->close();
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Solicitud guardada con éxito',
+            'folio' => $folio
+        ]);
+    } else {
+        throw new Exception("Error al ejecutar la consulta: " . $stmt->error);
+    }
 
-    $folio = $pdo->lastInsertId();
-
-    echo json_encode([
-        'success' => true,
-        'message' => 'Solicitud guardada con éxito',
-        'folio' => $folio
-    ]);
-
-} catch (PDOException $e) {
+} catch (Exception $e) {
     error_log("Error al guardar solicitud: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Error al guardar la solicitud en la base de datos']);
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Error al guardar la solicitud en la base de datos',
+        'error' => (defined('APP_ENV') && APP_ENV === 'development') ? $e->getMessage() : 'Error interno del servidor'
+    ]);
+    
+    if (isset($stmt)) {
+        $stmt->close();
+    }
 }

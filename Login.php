@@ -1,68 +1,132 @@
 <?php
-session_start();
+// Incluir sistema de validaciones
+require_once 'utils/validaciones.php';
+require_once 'conexion.php';
 
-// Configuración de conexión
-$servername = "localhost";
-$username = "root";
-$password = "5211";  // Cambia esto por tu contraseña real
-$dbname = "dback";
+// Iniciar sesión si no está iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Verificar conexión
+if (!isset($conn) || $conn->connect_error) {
+    die("Error de conexión: " . ($conn->connect_error ?? "No se pudo establecer conexión"));
+}
+
+// Generar token CSRF
+$csrf_token = generarCSRF();
 
 $connectionMessage = "";
-$connectionStatus = false;
+$connectionStatus = true;
 $userErrorMessage = "";
 $passwordErrorMessage = "";
 $lastUsername = "";
 
-try {
-    $conn = new mysqli($servername, $username, $password, $dbname);
+// Protección contra fuerza bruta
+$intentos_maximos = 5;
+$tiempo_bloqueo = 300; // 5 minutos
+$ip_cliente = $_SERVER['REMOTE_ADDR'] ?? '';
 
-    if ($conn->connect_error) {
-        throw new Exception("Error de conexión: " . $conn->connect_error);
+// Verificar si la IP está bloqueada
+$intentos_key = 'login_intentos_' . md5($ip_cliente);
+$ultimo_intento_key = 'login_ultimo_intento_' . md5($ip_cliente);
+
+if (isset($_SESSION[$intentos_key]) && $_SESSION[$intentos_key] >= $intentos_maximos) {
+    $tiempo_espera = isset($_SESSION[$ultimo_intento_key]) ? time() - $_SESSION[$ultimo_intento_key] : 0;
+    if ($tiempo_espera < $tiempo_bloqueo) {
+        $tiempo_restante = $tiempo_bloqueo - $tiempo_espera;
+        $minutos = floor($tiempo_restante / 60);
+        $segundos = $tiempo_restante % 60;
+        $connectionMessage = "<p style='color: red; text-align: center;'>Demasiados intentos fallidos. Por favor, espera {$minutos} minutos y {$segundos} segundos antes de intentar nuevamente.</p>";
+        $connectionStatus = false;
+    } else {
+        // Resetear intentos después del tiempo de bloqueo
+        unset($_SESSION[$intentos_key]);
+        unset($_SESSION[$ultimo_intento_key]);
     }
-
-    $connectionStatus = true;
-
-    if (isset($_POST['Login'])) {
-        $usuario = $conn->real_escape_string($_POST['IngresarUsuario']);
-        $clave = $conn->real_escape_string($_POST['IngresarContraseña']);
-        $lastUsername = $usuario;
-
-        // Verificar usuario en la tabla `usuarios`
-        $stmt = $conn->prepare("SELECT ID_Usuario, Usuario, ROL, Contraseña FROM usuarios WHERE Usuario = ?");
-        $stmt->bind_param("s", $usuario);
-        $stmt->execute();
-        $userResult = $stmt->get_result();
-
-        if ($userResult->num_rows > 0) {
-            $userData = $userResult->fetch_assoc();
-            // Verificar contraseña (la contraseña en la BD está en texto plano, cambiar a hash para mayor seguridad)
-            if ($userData['Contraseña'] === $clave) {
-                $_SESSION['usuario_id'] = $userData['ID_Usuario'];
-                $_SESSION['usuario_nombre'] = $userData['Usuario']; // Usar el nombre de usuario para la sesión
-                $_SESSION['usuario_cargo'] = $userData['ROL'];
-                $_SESSION['usuario_usuario'] = $userData['Usuario'];
-
-                echo "<script>
-                    setTimeout(function() {
-                        window.location.href = 'MenuAdmin.php';
-                    }, 2000);
-                </script>";
-                $connectionMessage = "<p style='color: green; text-align: center;'>Login exitoso! Redirigiendo...</p>";
-            } else {
-                $passwordErrorMessage = "Contraseña incorrecta.";
-            }
-        } else {
-            $userErrorMessage = "El usuario no existe.";
-        }
-        $stmt->close();
-    }
-} catch (Exception $e) {
-    $connectionMessage = "<p style='color: red; text-align: center;'>Error: " . $e->getMessage() . "</p>";
-    $connectionStatus = false;
 }
 
-if (isset($conn) && $conn instanceof mysqli) {
-    $conn->close();
+if ($connectionStatus && isset($_POST['Login'])) {
+    // Validar token CSRF
+    $token_recibido = $_POST['csrf_token'] ?? '';
+    if (!validarCSRF($token_recibido)) {
+        $connectionMessage = "<p style='color: red; text-align: center;'>Error de seguridad: token inválido. Por favor, recarga la página.</p>";
+        $connectionStatus = false;
+    } else {
+        // Crear instancia del validador
+        $validador = new Validador();
+        
+        // Validar y sanitizar datos
+        $usuario = Validador::sanitizar($_POST['IngresarUsuario'] ?? '', 'string');
+        $clave = $_POST['IngresarContraseña'] ?? '';
+        $lastUsername = $usuario;
+        
+        // Validaciones
+        $validador->requerido($usuario, 'usuario', 'El usuario es requerido');
+        $validador->longitud($usuario, 'usuario', 3, 50);
+        $validador->requerido($clave, 'contraseña', 'La contraseña es requerida');
+        $validador->longitud($clave, 'contraseña', 4, 100);
+        
+        if (!$validador->tieneErrores()) {
+            // Verificar usuario en la tabla `usuarios`
+            $stmt = $conn->prepare("SELECT ID_Usuario, Usuario, ROL, Contraseña FROM usuarios WHERE Usuario = ?");
+            $stmt->bind_param("s", $usuario);
+            $stmt->execute();
+            $userResult = $stmt->get_result();
+
+            if ($userResult->num_rows > 0) {
+                $userData = $userResult->fetch_assoc();
+                
+                // Verificar contraseña (mejorar: usar password_verify si las contraseñas están hasheadas)
+                // Por ahora, comparación directa (cambiar a hash en producción)
+                if ($userData['Contraseña'] === $clave) {
+                    // Login exitoso - resetear intentos
+                    unset($_SESSION[$intentos_key]);
+                    unset($_SESSION[$ultimo_intento_key]);
+                    
+                    // Regenerar ID de sesión por seguridad
+                    session_regenerate_id(true);
+                    
+                    $_SESSION['usuario_id'] = $userData['ID_Usuario'];
+                    $_SESSION['usuario_nombre'] = $userData['Usuario'];
+                    $_SESSION['usuario_cargo'] = $userData['ROL'];
+                    $_SESSION['usuario_usuario'] = $userData['Usuario'];
+                    $_SESSION['login_time'] = time();
+
+                    echo "<script>
+                        setTimeout(function() {
+                            window.location.href = 'MenuAdmin.PHP';
+                        }, 2000);
+                    </script>";
+                    $connectionMessage = "<p style='color: green; text-align: center;'>Login exitoso! Redirigiendo...</p>";
+                } else {
+                    // Contraseña incorrecta - incrementar intentos
+                    $intentos = isset($_SESSION[$intentos_key]) ? $_SESSION[$intentos_key] + 1 : 1;
+                    $_SESSION[$intentos_key] = $intentos;
+                    $_SESSION[$ultimo_intento_key] = time();
+                    
+                    $passwordErrorMessage = "Contraseña incorrecta. Intentos restantes: " . ($intentos_maximos - $intentos);
+                }
+            } else {
+                // Usuario no existe - incrementar intentos (no revelar si el usuario existe por seguridad)
+                $intentos = isset($_SESSION[$intentos_key]) ? $_SESSION[$intentos_key] + 1 : 1;
+                $_SESSION[$intentos_key] = $intentos;
+                $_SESSION[$ultimo_intento_key] = time();
+                
+                // No revelar si el usuario existe o no por seguridad
+                $userErrorMessage = "Usuario o contraseña incorrectos. Intentos restantes: " . ($intentos_maximos - $intentos);
+            }
+            $stmt->close();
+        } else {
+            $errores = $validador->obtenerErrores();
+            if (isset($errores['usuario'])) {
+                $userErrorMessage = $errores['usuario'][0];
+            }
+            if (isset($errores['contraseña'])) {
+                $passwordErrorMessage = $errores['contraseña'][0];
+            }
+        }
+    }
 }
 ?>
 
@@ -216,7 +280,8 @@ if (isset($conn) && $conn instanceof mysqli) {
             </div>
         <?php endif; ?>
         
-        <form action="" method="post">
+        <form action="" method="post" id="loginForm">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
             <div class="input-group">
                 <div class="input-icon">
                     <i class="fas fa-user"></i>

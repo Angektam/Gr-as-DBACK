@@ -13,13 +13,16 @@
  */
 
 require_once 'conexion.php';
-// La sesión ya se inicia en config.php
+require_once 'utils/validaciones.php';
 
 // Verificar sesión
 if (!isset($_SESSION['usuario_id'])) {
     header("Location: Login.php");
     exit();
 }
+
+// Generar token CSRF
+$csrf_token = generarCSRF();
 
 $mensaje = '';
 $tipo_mensaje = '';
@@ -28,30 +31,56 @@ $usuario_cargo = $_SESSION['usuario_cargo'] ?? 'Usuario';
 // ==================== PROCESAR ACCIONES ====================
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
-    
-    // AGREGAR EMPLEADO
-    if ($action === 'add') {
-        $nombres = $conn->real_escape_string(trim($_POST['nombres']));
-        $apellido1 = $conn->real_escape_string(trim($_POST['apellido1']));
-        $apellido2 = $conn->real_escape_string(trim($_POST['apellido2']));
-        $rfc = strtoupper($conn->real_escape_string(trim($_POST['rfc'])));
-        $nomina = intval($_POST['nomina']);
-        $fecha_ingreso = $conn->real_escape_string($_POST['fecha_ingreso']);
-        $puesto = $conn->real_escape_string($_POST['puesto']);
-        $departamento = $conn->real_escape_string($_POST['departamento']);
-        $sueldo = floatval($_POST['sueldo']);
-        $telefono = $conn->real_escape_string(trim($_POST['telefono']));
-        $email = $conn->real_escape_string(trim($_POST['email']));
-        $licencia = $conn->real_escape_string(trim($_POST['licencia']));
-        $direccion = $conn->real_escape_string(trim($_POST['direccion']));
-        $estado = 'activo';
+    // Validar token CSRF
+    $token_recibido = $_POST['csrf_token'] ?? '';
+    if (!validarCSRF($token_recibido)) {
+        $tipo_mensaje = 'error';
+        $mensaje = '❌ Error de seguridad: token inválido. Por favor, recarga la página.';
+    } else {
+        $action = $_POST['action'] ?? '';
+        $validador = new Validador();
         
-        // Validar RFC
-        if (!preg_match('/^[A-Z&Ñ]{3,4}\d{6}[A-V1-9][A-Z1-9][0-9A]$/', $rfc)) {
-            $tipo_mensaje = 'error';
-            $mensaje = 'RFC inválido. Por favor verifica el formato.';
-        } else {
+        // AGREGAR EMPLEADO
+        if ($action === 'add') {
+            $nombres = Validador::sanitizar($_POST['nombres'] ?? '', 'string');
+            $apellido1 = Validador::sanitizar($_POST['apellido1'] ?? '', 'string');
+            $apellido2 = Validador::sanitizar($_POST['apellido2'] ?? '', 'string');
+            $rfc = strtoupper(Validador::sanitizar($_POST['rfc'] ?? '', 'string'));
+            $nomina = intval($_POST['nomina'] ?? 0);
+            $fecha_ingreso = Validador::sanitizar($_POST['fecha_ingreso'] ?? '', 'string');
+            $puesto = Validador::sanitizar($_POST['puesto'] ?? '', 'string');
+            $departamento = Validador::sanitizar($_POST['departamento'] ?? '', 'string');
+            $sueldo = floatval($_POST['sueldo'] ?? 0);
+            $telefono = Validador::sanitizar($_POST['telefono'] ?? '', 'string');
+            $email = Validador::sanitizar($_POST['email'] ?? '', 'email');
+            $licencia = Validador::sanitizar($_POST['licencia'] ?? '', 'string');
+            $direccion = Validador::sanitizar($_POST['direccion'] ?? '', 'string');
+            $estado = 'activo';
+            
+            // Validaciones
+            $validador->validarNombre($nombres, 'nombres', 2, 50, true);
+            $validador->validarNombre($apellido1, 'apellido1', 2, 50, true);
+            if (!empty($apellido2)) {
+                $validador->validarNombre($apellido2, 'apellido2', 2, 50, false);
+            }
+            $validador->requerido($rfc, 'rfc', 'El RFC es requerido');
+            $validador->longitud($rfc, 'rfc', 12, 13);
+            if (!preg_match('/^[A-Z&Ñ]{3,4}\d{6}[A-V1-9][A-Z1-9][0-9A]$/', $rfc)) {
+                $validador->agregarError('rfc', 'RFC inválido. Por favor verifica el formato.');
+            }
+            $validador->validarNumero($nomina, 'nomina', 1, 999999);
+            $validador->requerido($fecha_ingreso, 'fecha_ingreso', 'La fecha de ingreso es requerida');
+            $validador->requerido($puesto, 'puesto', 'El puesto es requerido');
+            $validador->requerido($departamento, 'departamento', 'El departamento es requerido');
+            $validador->validarNumero($sueldo, 'sueldo', 0, 999999);
+            if (!empty($telefono)) {
+                $validador->validarTelefono($telefono, 'telefono', false);
+            }
+            if (!empty($email)) {
+                $validador->validarEmail($email, 'email', false);
+            }
+            
+            if (!$validador->tieneErrores()) {
             $query = "INSERT INTO empleados 
                      (Nombres, Apellido1, Apellido2, RFC, Nomina, Fecha_Ingreso, Puesto, 
                       departamento, Sueldo, telefono, email, licencia, direccion, estado) 
@@ -493,6 +522,7 @@ while ($row = $dept_result->fetch_assoc()) {
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form id="empleadoForm" method="POST">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
                     <div class="modal-body">
                         <input type="hidden" name="action" id="formAction" value="add">
                         <input type="hidden" name="id" id="empleadoId">

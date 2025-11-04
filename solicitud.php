@@ -1,101 +1,174 @@
 <?php
-// Configuración de conexión
-$servername = "localhost";
-$username = "root";
-$password = "5211";  // Cambia esto por tu contraseña real
-$dbname = "dback";
-
-// Crear conexión
-$conn = new mysqli($servername, $username, $password, $dbname);
+// Incluir sistema de validaciones
+require_once 'utils/validaciones.php';
+require_once 'conexion.php';
 
 // Verificar conexión
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+if (!isset($conn) || $conn->connect_error) {
+    die("Error de conexión: " . ($conn->connect_error ?? "No se pudo establecer conexión"));
 }
+
+// Iniciar sesión si no está iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Generar token CSRF
+$csrf_token = generarCSRF();
 
 // Mostrar mensaje de éxito tras PRG
 if (isset($_GET['enviado']) && $_GET['enviado'] === '1') {
-    $success_message = "Solicitud enviada con éxito.";
+    $success_message = "Solicitud enviada con éxito. Nos pondremos en contacto contigo pronto.";
 }
 
 // Procesar el formulario si se envió
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Recoger y sanitizar los datos del formulario
-    $nombre = $conn->real_escape_string($_POST['nombre']);
-    $telefono = $conn->real_escape_string($_POST['telefono']);
-    $email = $conn->real_escape_string($_POST['email']);
-    $ubicacion_origen = $conn->real_escape_string($_POST['ubicacion_origen']);
-    $ubicacion_destino = $conn->real_escape_string($_POST['ubicacion_destino']);
-    $vehiculo = $conn->real_escape_string($_POST['vehiculo']);
-    $marca = $conn->real_escape_string($_POST['marca']);
-    $modelo = $conn->real_escape_string($_POST['modelo']);
-    $tipo_servicio = $conn->real_escape_string($_POST['tipo_servicio']);
-    $descripcion = $conn->real_escape_string($_POST['descripcion']);
-    $urgencia = $conn->real_escape_string($_POST['urgencia']);
-    $distancia = $conn->real_escape_string($_POST['distancia']);
-    
-    // Procesar el costo - CORRECCIÓN PRINCIPAL
-    $costo_raw = $_POST['costo'];
-    $costo_clean = preg_replace('/[^0-9.]/', '', $costo_raw); // Eliminar todo excepto números y punto decimal
-    $costo = floatval($costo_clean); // Convertir a número
-    
-    // Validación adicional del costo
-    if (!is_numeric($costo)) {
-        $error_message = "El costo debe ser un valor numérico válido";
+    // Validar token CSRF
+    $token_recibido = $_POST['csrf_token'] ?? '';
+    if (!validarCSRF($token_recibido)) {
+        $error_message = "Error de seguridad: token inválido. Por favor, recarga la página e intenta nuevamente.";
     } else {
-        $metodo_pago = $conn->real_escape_string($_POST['metodo_pago_seleccionado']);
-        $paypal_order_id = $conn->real_escape_string($_POST['paypal_order_id']);
-        $paypal_status = $conn->real_escape_string($_POST['paypal_status']);
-        $paypal_email = $conn->real_escape_string($_POST['paypal_email']);
-        $paypal_name = $conn->real_escape_string($_POST['paypal_name']);
-        $consentimiento = isset($_POST['consentimiento']) ? 1 : 0;
+        // Crear instancia del validador
+        $validador = new Validador();
         
-        // Procesar la foto del vehículo
-        $foto_nombre = '';
-        if (isset($_FILES['foto']) && $_FILES['foto']['error'] == UPLOAD_ERR_OK) {
-            $foto_tmp = $_FILES['foto']['tmp_name'];
-            $foto_nombre = basename($_FILES['foto']['name']);
-            $upload_dir = "uploads/";
-            
-            // Crear directorio si no existe
-            if (!file_exists($upload_dir)) {
-                mkdir($upload_dir, 0777, true);
-            }
-            
-            // Mover el archivo al directorio de uploads
-            move_uploaded_file($foto_tmp, $upload_dir . $foto_nombre);
+        // Validar y sanitizar datos
+        $nombre = Validador::sanitizar($_POST['nombre'] ?? '', 'string');
+        $telefono = Validador::sanitizar($_POST['telefono'] ?? '', 'string');
+        $email = Validador::sanitizar($_POST['email'] ?? '', 'email');
+        $ubicacion_origen = Validador::sanitizar($_POST['ubicacion_origen'] ?? '', 'string');
+        $ubicacion_destino = Validador::sanitizar($_POST['ubicacion_destino'] ?? '', 'string');
+        $vehiculo = Validador::sanitizar($_POST['vehiculo'] ?? '', 'string');
+        $marca = Validador::sanitizar($_POST['marca'] ?? '', 'string');
+        $modelo = Validador::sanitizar($_POST['modelo'] ?? '', 'string');
+        $tipo_servicio = Validador::sanitizar($_POST['tipo_servicio'] ?? '', 'string');
+        $descripcion = Validador::sanitizar($_POST['descripcion'] ?? '', 'string');
+        $urgencia = Validador::sanitizar($_POST['urgencia'] ?? 'normal', 'string');
+        $distancia = Validador::sanitizar($_POST['distancia'] ?? '0', 'string');
+        
+        // Aplicar validaciones
+        $validador->validarNombre($nombre, 'nombre', 2, 50, true);
+        $validador->validarTelefono($telefono, 'telefono', true);
+        if (!empty($email)) {
+            $validador->validarEmail($email, 'email', false);
+        }
+        $validador->requerido($ubicacion_origen, 'ubicacion_origen', 'La ubicación de origen es requerida');
+        $validador->longitud($ubicacion_origen, 'ubicacion_origen', 5, 200);
+        $validador->requerido($ubicacion_destino, 'ubicacion_destino', 'La ubicación de destino es requerida');
+        $validador->longitud($ubicacion_destino, 'ubicacion_destino', 5, 200);
+        $validador->requerido($vehiculo, 'vehiculo', 'El tipo de vehículo es requerido');
+        $validador->longitud($marca, 'marca', 1, 50);
+        $validador->longitud($modelo, 'modelo', 1, 50);
+        $validador->requerido($tipo_servicio, 'tipo_servicio', 'El tipo de servicio es requerido');
+        $validador->longitud($descripcion, 'descripcion', 10, 500);
+        
+        // Validar valores permitidos
+        $vehiculos_validos = ['Baica', 'Automóvil', 'Camioneta', 'Motocicleta', 'Autobus', 'Otro'];
+        if (!in_array($vehiculo, $vehiculos_validos)) {
+            $validador->agregarError('vehiculo', 'Tipo de vehículo no válido');
         }
         
-        // Preparar datos para la tabla real 'solicitudes'
-        $nombre_completo = $nombre;
-        $ubicacion_final = !empty($ubicacion_destino) ? $ubicacion_destino : $ubicacion_origen;
-        $tipo_vehiculo = $vehiculo;
-        $marca_vehiculo = $marca;
-        $modelo_vehiculo = $modelo;
-        $descripcion_problema = $descripcion;
-        $distancia_km = floatval(preg_replace('/[^0-9.]/', '', $distancia));
-        $costo_estimado = $costo;
-        $consentimiento_datos = $consentimiento;
-        $ip_cliente = $_SERVER['REMOTE_ADDR'] ?? '';
-        $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-
-        // Insertar en la tabla 'solicitudes'
-        $sql = "INSERT INTO solicitudes (
-            nombre_completo, telefono, email, ubicacion, ubicacion_destino, tipo_vehiculo, marca_vehiculo, modelo_vehiculo, 
-            foto_vehiculo, tipo_servicio, descripcion_problema, urgencia, distancia_km, costo_estimado, 
-            consentimiento_datos, ip_cliente, user_agent
-        ) VALUES (
-            '$nombre_completo', '$telefono', '$email', '$ubicacion_origen', '$ubicacion_destino', '$tipo_vehiculo', '$marca_vehiculo', '$modelo_vehiculo',
-            '$foto_nombre', '$tipo_servicio', '$descripcion_problema', '$urgencia', $distancia_km, $costo_estimado,
-            $consentimiento_datos, '$ip_cliente', '$user_agent'
-        )";
+        $tipos_servicio_validos = ['remolque', 'bateria', 'gasolina', 'llanta', 'arranque', 'mecanica'];
+        if (!in_array($tipo_servicio, $tipos_servicio_validos)) {
+            $validador->agregarError('tipo_servicio', 'Tipo de servicio no válido');
+        }
         
-        if ($conn->query($sql) === TRUE) {
-            // Redirigir (PRG) para limpiar el formulario y evitar reenvíos
-            header("Location: " . htmlspecialchars($_SERVER['PHP_SELF']) . "?enviado=1");
-            exit;
+        $urgencias_validas = ['normal', 'urgente', 'muy_urgente'];
+        if (!in_array($urgencia, $urgencias_validas)) {
+            $urgencia = 'normal';
+        }
+        
+        // Validar costo
+        $costo_raw = $_POST['costo'] ?? '0';
+        $costo_clean = preg_replace('/[^0-9.]/', '', $costo_raw);
+        $costo = floatval($costo_clean);
+        $validador->validarNumero($costo, 'costo', 0, 999999);
+        
+        // Validar distancia
+        $distancia_clean = preg_replace('/[^0-9.]/', '', $distancia);
+        $distancia_km = floatval($distancia_clean);
+        $validador->validarNumero($distancia_km, 'distancia', 0, 9999);
+        
+        // Validar archivo si se subió
+        if (isset($_FILES['foto']) && $_FILES['foto']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $validador->validarArchivo($_FILES['foto'], 'foto', 5, ['jpg', 'jpeg', 'png', 'gif']);
+        }
+        
+        // Validar consentimiento
+        $consentimiento = isset($_POST['consentimiento']) && $_POST['consentimiento'] == '1' ? 1 : 0;
+        if ($consentimiento != 1) {
+            $validador->agregarError('consentimiento', 'Debes aceptar el consentimiento de datos');
+        }
+        
+        // Si hay errores, mostrarlos
+        if ($validador->tieneErrores()) {
+            $error_message = $validador->obtenerErroresString();
         } else {
-            $error_message = "Error: " . $sql . "<br>" . $conn->error;
+            // Sanitizar datos adicionales
+            $metodo_pago = Validador::sanitizar($_POST['metodo_pago_seleccionado'] ?? 'Efectivo', 'string');
+            $paypal_order_id = Validador::sanitizar($_POST['paypal_order_id'] ?? '', 'string');
+            $paypal_status = Validador::sanitizar($_POST['paypal_status'] ?? '', 'string');
+            $paypal_email = Validador::sanitizar($_POST['paypal_email'] ?? '', 'email');
+            $paypal_name = Validador::sanitizar($_POST['paypal_name'] ?? '', 'string');
+            
+            // Procesar la foto del vehículo
+            $foto_nombre = '';
+            if (isset($_FILES['foto']) && $_FILES['foto']['error'] == UPLOAD_ERR_OK) {
+                $upload_dir = "uploads/";
+                
+                // Crear directorio si no existe
+                if (!file_exists($upload_dir)) {
+                    mkdir($upload_dir, 0755, true);
+                }
+                
+                // Generar nombre único para evitar conflictos
+                $extension = strtolower(pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION));
+                $foto_nombre = uniqid('foto_', true) . '.' . $extension;
+                $upload_path = $upload_dir . $foto_nombre;
+                
+                // Mover el archivo
+                if (!move_uploaded_file($_FILES['foto']['tmp_name'], $upload_path)) {
+                    $error_message = "Error al subir la foto. Por favor, intenta nuevamente.";
+                }
+            }
+            
+            // Preparar datos para la tabla 'solicitudes'
+            $nombre_completo = $nombre;
+            $ubicacion_final = !empty($ubicacion_destino) ? $ubicacion_destino : $ubicacion_origen;
+            $tipo_vehiculo = $vehiculo;
+            $marca_vehiculo = $marca;
+            $modelo_vehiculo = $modelo;
+            $descripcion_problema = $descripcion;
+            $consentimiento_datos = $consentimiento;
+            $ip_cliente = $_SERVER['REMOTE_ADDR'] ?? '';
+            $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+            
+            // Usar prepared statements para mayor seguridad
+            $stmt = $conn->prepare("INSERT INTO solicitudes (
+                nombre_completo, telefono, email, ubicacion, ubicacion_destino, tipo_vehiculo, marca_vehiculo, modelo_vehiculo, 
+                foto_vehiculo, tipo_servicio, descripcion_problema, urgencia, distancia_km, costo_estimado, 
+                consentimiento_datos, ip_cliente, user_agent
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            
+            if ($stmt) {
+                $stmt->bind_param("ssssssssssssddisss",
+                    $nombre_completo, $telefono, $email, $ubicacion_origen, $ubicacion_destino,
+                    $tipo_vehiculo, $marca_vehiculo, $modelo_vehiculo, $foto_nombre,
+                    $tipo_servicio, $descripcion_problema, $urgencia, $distancia_km, $costo_estimado,
+                    $consentimiento_datos, $ip_cliente, $user_agent
+                );
+                
+                if ($stmt->execute()) {
+                    $stmt->close();
+                    // Redirigir (PRG) para limpiar el formulario y evitar reenvíos
+                    header("Location: " . htmlspecialchars($_SERVER['PHP_SELF']) . "?enviado=1");
+                    exit;
+                } else {
+                    $error_message = "Error al guardar la solicitud. Por favor, intenta nuevamente.";
+                    $stmt->close();
+                }
+            } else {
+                $error_message = "Error al preparar la consulta: " . $conn->error;
+            }
         }
     }
     
@@ -112,6 +185,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="description" content="Solicita nuestro servicio de grúas 24/7. Asistencia rápida y profesional para todo tipo de vehículos.">
     <title>Solicitar Servicio de Grúa | Grúas DBACK</title>
     <link rel="stylesheet" href="CSS/Solicitud_ARCO.css">
+    <link rel="stylesheet" href="js/validaciones.css">
+    <script src="js/validaciones.js" defer></script>
 </head>
 <body>
     <header>
@@ -148,6 +223,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <p class="form-description">Complete el formulario y nos pondremos en contacto lo antes posible.</p>
             
             <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" id="servicioForm" enctype="multipart/form-data" novalidate>
+                <!-- Token CSRF para seguridad -->
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
                 <!-- Coordenadas ocultas para cálculo de distancia -->
                 <input type="hidden" id="origen_lat" name="origen_lat">
                 <input type="hidden" id="origen_lng" name="origen_lng">

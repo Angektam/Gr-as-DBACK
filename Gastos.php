@@ -3,36 +3,19 @@
 $page_title = 'Gestión de Gastos - Grúas DBACK';
 $additional_css = ['./CSS/Gastos.css', 'https://cdn.jsdelivr.net/npm/chart.js'];
 
-session_start();
+require_once 'conexion.php';
+require_once 'utils/validaciones.php';
 
-// 1. Configuración y verificación de sesión
-if (!isset($_SESSION['usuario_nombre'])) {
+// Verificar sesión
+if (!isset($_SESSION['usuario_id'])) {
     header('Location: Login.php');
     exit;
 }
 
-// Mostrar errores durante el desarrollo (eliminar en producción)
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// Generar token CSRF
+$csrf_token = generarCSRF();
 
-// 2. Configuración de la base de datos
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '5211');
-define('DB_NAME', 'dback');
-
-// 3. Función para conectar a la base de datos
-function conectarDB() {
-    $conexion = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-    if ($conexion->connect_error) {
-        die("Error de conexión: " . $conexion->connect_error);
-    }
-    $conexion->set_charset("utf8");
-    return $conexion;
-}
-
-// 4. Función para obtener iconos según categoría
+// Función para obtener iconos según categoría
 function obtenerIconoCategoria($categoria) {
     $iconos = [
         'Reparacion' => 'fa-tools',
@@ -42,68 +25,85 @@ function obtenerIconoCategoria($categoria) {
     return $iconos[$categoria] ?? 'fa-money-bill-wave';
 }
 
-// 5. Conectar a la base de datos
-$conexion = conectarDB();
+// Conectar a la base de datos
+if (!isset($conn) || $conn->connect_error) {
+    die("Error de conexión: " . ($conn->connect_error ?? "No se pudo establecer conexión"));
+}
 
-// 5.1 Procesar acciones POST
+$conexion = $conn;
+
+// Procesar acciones POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $errores = [];
+    // Validar token CSRF
+    $token_recibido = $_POST['csrf_token'] ?? '';
+    if (!validarCSRF($token_recibido)) {
+        $_SESSION['error'] = "Error de seguridad: token inválido. Por favor, recarga la página.";
+    } else {
+        $validador = new Validador();
 
-    if (isset($_POST['crear_gasto'])) {
-        // Crear nuevo gasto
-        $tipo = $_POST['tipo'] ?? '';
-        $idGrua = $_POST['id_grua'] ?? '';
-        $descripcion = trim($_POST['descripcion'] ?? '');
-        $fecha = $_POST['fecha'] ?? '';
-        $hora = $_POST['hora'] ?? '';
-        $costo = $_POST['costo'] ?? '';
+        if (isset($_POST['crear_gasto'])) {
+            // Crear nuevo gasto
+            $tipo = Validador::sanitizar($_POST['tipo'] ?? '', 'string');
+            $idGrua = intval($_POST['id_grua'] ?? 0);
+            $descripcion = Validador::sanitizar($_POST['descripcion'] ?? '', 'string');
+            $fecha = Validador::sanitizar($_POST['fecha'] ?? '', 'string');
+            $hora = Validador::sanitizar($_POST['hora'] ?? '', 'string');
+            $costo_raw = $_POST['costo'] ?? '0';
+            $costo = floatval(preg_replace('/[^0-9.]/', '', $costo_raw));
 
-        // Validaciones básicas
-        $tiposValidos = ['Reparacion','Gasto_Oficina','Gasolina'];
-        if (!in_array($tipo, $tiposValidos, true)) $errores[] = 'Tipo inválido';
-        if (!ctype_digit((string)$idGrua)) $errores[] = 'Grúa inválida';
-        if ($descripcion === '' || mb_strlen($descripcion) > 400) $errores[] = 'Descripción requerida (máx 400)';
-        if (!DateTime::createFromFormat('Y-m-d', $fecha)) $errores[] = 'Fecha inválida (YYYY-MM-DD)';
-        if (!DateTime::createFromFormat('H:i', $hora)) $errores[] = 'Hora inválida (HH:MM)';
-        if (!is_numeric($costo) || $costo < 0) $errores[] = 'Costo inválido';
-
-        if (empty($errores)) {
-            $stmt = $conexion->prepare("INSERT INTO `reparacion-servicio` (ID_Grua, Tipo, Descripcion, Fecha, Hora, Costo) VALUES (?, ?, ?, ?, ?, ?)");
-            if ($stmt) {
-                $stmt->bind_param("issssd", $idGrua, $tipo, $descripcion, $fecha, $hora, $costo);
-                if ($stmt->execute()) {
-                    $_SESSION['success'] = "Gasto creado correctamente";
-                } else {
-                    $_SESSION['error'] = "No se pudo crear el gasto: " . $stmt->error;
-                }
-                $stmt->close();
-            } else {
-                $_SESSION['error'] = "Error preparando inserción: " . $conexion->error;
+            // Validaciones
+            $tiposValidos = ['Reparacion','Gasto_Oficina','Gasolina'];
+            if (!in_array($tipo, $tiposValidos, true)) {
+                $validador->agregarError('tipo', 'Tipo inválido');
             }
-        } else {
-            $_SESSION['error'] = implode(' · ', $errores);
-        }
-    } elseif (isset($_POST['editar_gasto'])) {
-        // Editar gasto existente
-        $idGasto = $_POST['id_gasto'] ?? '';
-        $tipo = $_POST['tipo'] ?? '';
-        $idGrua = $_POST['id_grua'] ?? '';
-        $descripcion = trim($_POST['descripcion'] ?? '');
-        $fecha = $_POST['fecha'] ?? '';
-        $hora = $_POST['hora'] ?? '';
-        $costo = $_POST['costo'] ?? '';
+            $validador->validarNumero($idGrua, 'id_grua', 1, 999999);
+            $validador->requerido($descripcion, 'descripcion', 'La descripción es requerida');
+            $validador->longitud($descripcion, 'descripcion', 5, 400);
+            $validador->requerido($fecha, 'fecha', 'La fecha es requerida');
+            $validador->requerido($hora, 'hora', 'La hora es requerida');
+            $validador->validarNumero($costo, 'costo', 0, 999999);
 
-        // Validaciones básicas
-        $tiposValidos = ['Reparacion','Gasto_Oficina','Gasolina'];
-        if (!ctype_digit((string)$idGasto)) $errores[] = 'ID de gasto inválido';
-        if (!in_array($tipo, $tiposValidos, true)) $errores[] = 'Tipo inválido';
-        if (!ctype_digit((string)$idGrua)) $errores[] = 'Grúa inválida';
-        if ($descripcion === '' || mb_strlen($descripcion) > 400) $errores[] = 'Descripción requerida (máx 400)';
-        if (!DateTime::createFromFormat('Y-m-d', $fecha)) $errores[] = 'Fecha inválida (YYYY-MM-DD)';
-        if (!DateTime::createFromFormat('H:i', $hora)) $errores[] = 'Hora inválida (HH:MM)';
-        if (!is_numeric($costo) || $costo < 0) $errores[] = 'Costo inválido';
+            if (!$validador->tieneErrores()) {
+                $stmt = $conexion->prepare("INSERT INTO `reparacion-servicio` (ID_Grua, Tipo, Descripcion, Fecha, Hora, Costo) VALUES (?, ?, ?, ?, ?, ?)");
+                if ($stmt) {
+                    $stmt->bind_param("issssd", $idGrua, $tipo, $descripcion, $fecha, $hora, $costo);
+                    if ($stmt->execute()) {
+                        $_SESSION['success'] = "Gasto creado correctamente";
+                    } else {
+                        $_SESSION['error'] = "No se pudo crear el gasto: " . $stmt->error;
+                    }
+                    $stmt->close();
+                } else {
+                    $_SESSION['error'] = "Error preparando inserción: " . $conexion->error;
+                }
+            } else {
+                $_SESSION['error'] = $validador->obtenerErroresString(' · ');
+            }
+        } elseif (isset($_POST['editar_gasto'])) {
+            // Editar gasto existente
+            $idGasto = intval($_POST['id_gasto'] ?? 0);
+            $tipo = Validador::sanitizar($_POST['tipo'] ?? '', 'string');
+            $idGrua = intval($_POST['id_grua'] ?? 0);
+            $descripcion = Validador::sanitizar($_POST['descripcion'] ?? '', 'string');
+            $fecha = Validador::sanitizar($_POST['fecha'] ?? '', 'string');
+            $hora = Validador::sanitizar($_POST['hora'] ?? '', 'string');
+            $costo_raw = $_POST['costo'] ?? '0';
+            $costo = floatval(preg_replace('/[^0-9.]/', '', $costo_raw));
 
-        if (empty($errores)) {
+            // Validaciones
+            $validador->validarNumero($idGasto, 'id_gasto', 1, 999999);
+            $tiposValidos = ['Reparacion','Gasto_Oficina','Gasolina'];
+            if (!in_array($tipo, $tiposValidos, true)) {
+                $validador->agregarError('tipo', 'Tipo inválido');
+            }
+            $validador->validarNumero($idGrua, 'id_grua', 1, 999999);
+            $validador->requerido($descripcion, 'descripcion', 'La descripción es requerida');
+            $validador->longitud($descripcion, 'descripcion', 5, 400);
+            $validador->requerido($fecha, 'fecha', 'La fecha es requerida');
+            $validador->requerido($hora, 'hora', 'La hora es requerida');
+            $validador->validarNumero($costo, 'costo', 0, 999999);
+
+            if (!$validador->tieneErrores()) {
             $stmt = $conexion->prepare("UPDATE `reparacion-servicio` SET ID_Grua=?, Tipo=?, Descripcion=?, Fecha=?, Hora=?, Costo=? WHERE ID_Gasto=?");
             if ($stmt) {
                 $stmt->bind_param("issssdi", $idGrua, $tipo, $descripcion, $fecha, $hora, $costo, $idGasto);
@@ -116,28 +116,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $_SESSION['error'] = "Error preparando actualización: " . $conexion->error;
             }
-        } else {
-            $_SESSION['error'] = implode(' · ', $errores);
-        }
-    } elseif (isset($_POST['eliminar_gasto'])) {
-        // Eliminar gasto
-        $idGasto = $_POST['id_gasto'] ?? '';
-        
-        if (ctype_digit((string)$idGasto)) {
-            $stmt = $conexion->prepare("DELETE FROM `reparacion-servicio` WHERE ID_Gasto=?");
-            if ($stmt) {
-                $stmt->bind_param("i", $idGasto);
-                if ($stmt->execute()) {
-                    $_SESSION['success'] = "Gasto eliminado correctamente";
-                } else {
-                    $_SESSION['error'] = "No se pudo eliminar el gasto: " . $stmt->error;
-                }
-                $stmt->close();
             } else {
-                $_SESSION['error'] = "Error preparando eliminación: " . $conexion->error;
+                $_SESSION['error'] = $validador->obtenerErroresString(' · ');
             }
-        } else {
-            $_SESSION['error'] = "ID de gasto inválido";
+        } elseif (isset($_POST['eliminar_gasto'])) {
+            $idGasto = intval($_POST['id_gasto'] ?? 0);
+            if ($idGasto <= 0) {
+                $_SESSION['error'] = "ID de gasto inválido";
+            } else {
+                $stmt = $conexion->prepare("DELETE FROM `reparacion-servicio` WHERE ID_Gasto=?");
+                if ($stmt) {
+                    $stmt->bind_param("i", $idGasto);
+                    if ($stmt->execute()) {
+                        $_SESSION['success'] = "Gasto eliminado correctamente";
+                    } else {
+                        $_SESSION['error'] = "No se pudo eliminar el gasto: " . $stmt->error;
+                    }
+                    $stmt->close();
+                } else {
+                    $_SESSION['error'] = "Error preparando eliminación: " . $conexion->error;
+                }
+            }
         }
     }
 
@@ -1168,6 +1167,7 @@ if (isset($_GET['export'])) {
             <div class="filters-panel" style="margin-bottom: 18px;">
                 <h2 class="filters-title"><i class="fas fa-plus-circle"></i> Registrar Gasto</h2>
                 <form method="post" id="gastoForm" style="display:grid; gap:12px;">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
                     <input type="hidden" name="crear_gasto" value="1">
                     <input type="hidden" name="id_gasto" id="id_gasto_edit" value="">
                     <div class="filter-row">

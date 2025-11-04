@@ -1,0 +1,52 @@
+/* Estilos para validaciones */
+.campo-error {
+    border: 2px solid #dc3545 !important;
+    background-color: #fff5f5 !important;
+}
+
+.campo-valido {
+    border: 2px solid #28a745 !important;
+    background-color: #f0fff4 !important;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.error-message:empty {
+    display: none;
+}
+
+.success-message {
+    color: #28a745;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.validacion-en-proceso {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.mensaje-error-general {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.mensaje-exito-general {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+}
+
