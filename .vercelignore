@@ -1,0 +1,13 @@
+*.php
+config/
+database/
+uploads/
+*.md
+*.txt
+!README.md
+!index.html
+!index-styles.css
+!styles.css
+!Elementos/
+!CSS/
+

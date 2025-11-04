@@ -1,0 +1,12 @@
+{
+  "name": "gruas-dback",
+  "version": "2.0.0",
+  "description": "Sistema de Gestión de Grúas DBACK",
+  "scripts": {
+    "build": "echo 'No build step required'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
+
