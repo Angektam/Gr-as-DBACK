@@ -1,0 +1,79 @@
+═══════════════════════════════════════════════════════════════
+  GUÍA RÁPIDA: SUBIR DBACK A INFINITYFREE
+═══════════════════════════════════════════════════════════════
+
+📋 PASOS RÁPIDOS:
+
+1. CREAR CUENTA EN INFINITYFREE
+   → https://www.infinityfree.com/
+   → Click en "Sign Up"
+   → Verifica tu email
+
+2. CREAR SITIO WEB
+   → Panel → "Add Website"
+   → Elige subdominio (ej: dback-gruas.infinityfreeapp.com)
+   → Anota tus credenciales FTP
+
+3. CREAR BASE DE DATOS
+   → Panel → "MySQL Databases"
+   → Crea BD: "dback"
+   → Anota: Host, Usuario, Contraseña, Nombre completo
+
+4. IMPORTAR BASE DE DATOS
+   → Panel → "phpMyAdmin"
+   → Selecciona tu BD
+   → Importar → Selecciona: database/DBACKBD.sql
+
+5. DESCARGAR FILEZILLA
+   → https://filezilla-project.org/download.php?type=client
+   → Instala FileZilla
+
+6. CONECTAR POR FTP
+   → FileZilla → Conexión rápida:
+     Host: ftpupload.net
+     Usuario: (tu usuario FTP)
+     Contraseña: (tu contraseña FTP)
+     Puerto: 21
+
+7. SUBIR ARCHIVOS
+   → Navega a: htdocs/
+   → Sube TODOS los archivos de tu proyecto
+   → NO subas: config.php, .git/, .gitignore
+
+8. CREAR config.php
+   → En el panel: File Manager → htdocs/
+   → Crea archivo: config.php
+   → Copia contenido de: config-infinityfree.example.php
+   → Completa con tus datos de BD
+
+9. CONFIGURAR PERMISOS
+   → Carpeta uploads/ → Permisos: 755
+
+10. PROBAR
+    → Visita: https://tu-subdominio.infinityfreeapp.com
+    → Verifica que todo funcione
+
+═══════════════════════════════════════════════════════════════
+  DATOS QUE NECESITARÁS:
+═══════════════════════════════════════════════════════════════
+
+✅ FTP Host: ftpupload.net
+✅ FTP Usuario: (del panel)
+✅ FTP Contraseña: (la que configuraste)
+✅ MySQL Host: sqlxxx.infinityfree.com
+✅ MySQL Usuario: epiz_xxxxx
+✅ MySQL Contraseña: (la que configuraste)
+✅ MySQL BD: epiz_xxxxx_dback
+
+═══════════════════════════════════════════════════════════════
+  ARCHIVOS IMPORTANTES:
+═══════════════════════════════════════════════════════════════
+
+📄 config-infinityfree.example.php → Plantilla de configuración
+📄 GUIA_INFINITYFREE.md → Guía completa detallada
+📄 database/DBACKBD.sql → Base de datos a importar
+
+═══════════════════════════════════════════════════════════════
+
+💡 TIP: Guarda este archivo para referencia rápida
+
