@@ -1,4 +1,0 @@
-[2025-10-17 14:50:24] IP: ::1 - ERROR en unknown línea unknown: El tamaño del formulario (11790344 bytes) excede el límite permitido (8388608 bytes). Límite actual: 8M
-[2025-10-17 14:50:24] IP: ::1 - ERROR en unknown línea unknown: El tamaño del formulario (11790344 bytes) excede el límite permitido (8388608 bytes). Límite actual: 8M
-[2025-10-17 14:50:26] IP: ::1 - ERROR en unknown línea unknown: El tamaño del formulario (11790344 bytes) excede el límite permitido (8388608 bytes). Límite actual: 8M
-[2025-10-17 14:50:26] IP: ::1 - ERROR en unknown línea unknown: El tamaño del formulario (11790344 bytes) excede el límite permitido (8388608 bytes). Límite actual: 8M
