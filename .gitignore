@@ -1,0 +1,49 @@
+# Archivos de configuración con credenciales sensibles
+config.php
+config-production.php
+
+# Archivos de base de datos
+*.sql
+*.db
+*.sqlite
+
+# Archivos de log
+*.log
+activity_log.txt
+
+# Directorio de uploads (puede contener archivos subidos por usuarios)
+uploads/
+test_uploads/
+
+# Archivos temporales
+*.tmp
+*.temp
+*.bak
+*.backup
+*~
+
+# Directorios de backup
+DBACK-BACKUP-*/
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos del IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Archivos de sesión PHP
+sess_*
+
+# Variables de entorno
+.env
+.env.local
+
+# Archivos de configuración local
+config.local.php
+

@@ -1,0 +1,678 @@
+/* Estilos base */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f0e6ff; /* Fondo lila más intenso */
+    color: #333;
+    line-height: 1.6;
+}
+
+header {
+    background-color: #5a7ba7; /* Azul más bajo */
+    color: white;
+    padding: 1rem 0;
+    box-shadow: 0 2px 10px rgba(90, 123, 167, 0.2);
+}
+
+.nav-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: white;
+}
+
+.navbar-brand img {
+    margin-right: 15px;
+}
+
+.navbar-brand h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.nav-links {
+    display: flex;
+    gap: 15px;
+}
+
+.cta-button {
+    padding: 8px 16px;
+    background-color: #27ae60; /* Verde */
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+}
+
+.cta-button:hover {
+    background-color: #229954; /* Verde más oscuro */
+    transform: translateY(-2px);
+}
+
+.cta-button.accent {
+    background-color: #5a7ba7; /* Azul más bajo */
+}
+
+.cta-button.accent:hover {
+    background-color: #4a6b9a;
+}
+
+.cta-button:disabled {
+    background-color: #95a5a6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.cta-button:disabled:hover {
+    background-color: #95a5a6;
+    transform: none;
+}
+
+main {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 20px;
+}
+
+.formulario {
+    background-color: #f9f4ff; /* Blanco con tono lila */
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 15px rgba(156, 39, 176, 0.1);
+    border: 1px solid #d8c3e8; /* Borde morado claro */
+}
+
+.formulario h2 {
+    color: #5a7ba7; /* Azul más bajo */
+    margin-bottom: 1rem;
+    font-size: 1.8rem;
+    border-bottom: 2px solid #b8c5d1;
+    padding-bottom: 0.5rem;
+}
+
+.form-description {
+    margin-bottom: 2rem;
+    color: #757575;
+}
+
+fieldset {
+    border: 1px solid #d8c3e8; /* Morado claro */
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    background-color: #f5edfa; /* Fondo lila más intenso */
+}
+
+legend {
+    padding: 0 10px;
+    font-weight: 600;
+    color: #6a3093; /* Morado oscuro */
+    font-size: 1.2rem;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #6a3093; /* Morado oscuro */
+}
+
+input[type="text"],
+input[type="tel"],
+input[type="email"],
+input[type="file"],
+select,
+textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #d1c4e9; /* Morado muy claro */
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: all 0.3s;
+    background-color: #fdfbff; /* Blanco con toque lila */
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: #9c27b0; /* Morado */
+    box-shadow: 0 0 0 2px rgba(156, 39, 176, 0.2);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.location-input-container {
+    display: flex;
+    gap: 10px;
+}
+
+.location-button {
+    background-color: #9c27b0; /* Morado */
+    border: none;
+    border-radius: 4px;
+    padding: 0 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.location-button:hover {
+    background-color: #7b1fa2; /* Morado más oscuro */
+}
+
+.location-button img {
+    filter: brightness(0) invert(1); /* Icono blanco */
+}
+
+.info-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 1.5rem;
+}
+
+.summary-section {
+    background-color: #f0e5f7; /* Morado claro más intenso */
+    padding: 1.5rem;
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #d8c3e8;
+}
+
+.summary-section h3 {
+    margin-bottom: 1rem;
+    color: #6a3093; /* Morado oscuro */
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.summary-row span:first-child {
+    font-weight: 500;
+    color: #6a3093; /* Morado oscuro */
+}
+
+.payment-methods {
+    margin: 1.5rem 0;
+}
+
+.payment-methods h4 {
+    margin-bottom: 1rem;
+    color: #6a3093; /* Morado oscuro */
+}
+
+.payment-method {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #d8c3e8; /* Morado claro */
+    border-radius: 6px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+    background-color: #f9f4ff; /* Igual que formulario */
+}
+
+.payment-method:hover {
+    border-color: #9c27b0; /* Morado */
+    transform: translateY(-2px);
+}
+
+.payment-method[aria-checked="true"] {
+    border-color: #9c27b0; /* Morado */
+    background-color: #f0e5f7; /* Morado claro */
+    box-shadow: 0 2px 8px rgba(156, 39, 176, 0.1);
+}
+
+.payment-method-icon {
+    margin-right: 15px;
+}
+
+.payment-method-details {
+    flex-grow: 1;
+}
+
+.payment-method-title {
+    font-weight: 600;
+    color: #6a3093; /* Morado oscuro */
+    margin-bottom: 5px;
+}
+
+.payment-method-description {
+    color: #757575;
+    font-size: 0.9rem;
+}
+
+.payment-container {
+    padding: 1rem;
+    border: 1px solid #d8c3e8; /* Morado claro */
+    border-radius: 6px;
+    margin-top: 1rem;
+    background-color: #f9f4ff;
+}
+
+.paypal-button {
+    background-color: #003087;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background-color 0.3s;
+}
+
+.paypal-button:hover {
+    background-color: #002366;
+}
+
+.privacy-checkbox-container {
+    margin: 1.5rem 0;
+    display: flex;
+    align-items: center;
+}
+
+.privacy-checkbox-container input {
+    margin-right: 10px;
+    accent-color: #9c27b0; /* Morado */
+}
+
+.privacy-link {
+    color: #9c27b0; /* Morado */
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.privacy-link:hover {
+    color: #7b1fa2; /* Morado más oscuro */
+}
+
+.action-buttons {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.emergency-note {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #757575;
+}
+
+.emergency-phone {
+    color: #e91e63; /* Rosa fuerte */
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* Estilos para validaciones */
+.error-message {
+    color: #d32f2f; /* Rojo */
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: none;
+}
+
+.input-error {
+    border-color: #d32f2f !important; /* Rojo */
+}
+
+.input-success {
+    border-color: #388e3c !important; /* Verde */
+}
+
+.loading-spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(156, 39, 176, 0.1); /* Morado claro */
+    border-radius: 50%;
+    border-top-color: #9c27b0; /* Morado */
+    animation: spin 1s ease-in-out infinite;
+    margin-left: 10px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Mejoras de accesibilidad */
+[aria-invalid="true"] {
+    border-color: #d32f2f; /* Rojo */
+}
+
+[aria-invalid="false"] {
+    border-color: #388e3c; /* Verde */
+}
+
+/* Estilos para modales */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(106, 48, 147, 0.7); /* Morado oscuro con transparencia */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+}
+
+.modal-overlay[hidden] {
+    display: none;
+}
+
+.modal-overlay:not([hidden]) {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-container {
+    background-color: #f9f4ff; /* Igual que formulario */
+    padding: 2rem;
+    border-radius: 8px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(106, 48, 147, 0.3);
+    border: 1px solid #d8c3e8;
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #9c27b0; /* Morado */
+}
+
+.close-modal:hover {
+    color: #7b1fa2; /* Morado más oscuro */
+}
+
+.header-decoration {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e1bee7; /* Morado claro */
+}
+
+.header-decoration h1 {
+    color: #6a3093; /* Morado oscuro */
+    font-size: 1.5rem;
+}
+
+.modal-content {
+    margin-bottom: 1.5rem;
+}
+
+.modal-content h2 {
+    color: #6a3093; /* Morado oscuro */
+    margin: 1.5rem 0 1rem;
+    font-size: 1.2rem;
+}
+
+.modal-content ul {
+    margin-left: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.modal-content a {
+    color: #9c27b0; /* Morado */
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.modal-content a:hover {
+    text-decoration: underline;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    background-color: #9c27b0; /* Morado */
+    color: white;
+}
+
+.button:hover {
+    background-color: #7b1fa2; /* Morado más oscuro */
+    transform: translateY(-2px);
+}
+
+.button-reject {
+    background-color: #f9f4ff;
+    border: 1px solid #d32f2f; /* Rojo */
+    color: #d32f2f; /* Rojo */
+}
+
+.button-reject:hover {
+    background-color: #f5edfa;
+}
+
+.footer-decoration {
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid #e1bee7; /* Morado claro */
+    color: #757575;
+    font-size: 0.9rem;
+}
+
+.small-modal-container {
+    background-color: #f9f4ff;
+    padding: 2rem;
+    border-radius: 8px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    border: 1px solid #d8c3e8;
+}
+
+.small-modal-container h2 {
+    color: #6a3093; /* Morado oscuro */
+    margin-bottom: 1rem;
+}
+
+.notification-button {
+    padding: 0.75rem 1.5rem;
+    background-color: #9c27b0; /* Morado */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 1.5rem;
+    transition: all 0.3s;
+}
+
+.notification-button:hover {
+    background-color: #7b1fa2; /* Morado más oscuro */
+    transform: translateY(-2px);
+}
+
+.success-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(106, 48, 147, 0.7); /* Morado oscuro con transparencia */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+}
+
+.success-modal-overlay[hidden] {
+    display: none;
+}
+
+.success-modal-overlay:not([hidden]) {
+    opacity: 1;
+    visibility: visible;
+}
+
+.success-modal-container {
+    background-color: #f9f4ff;
+    padding: 2rem;
+    border-radius: 8px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(106, 48, 147, 0.3);
+    border: 1px solid #d8c3e8;
+}
+
+.success-modal-container h2 {
+    color: #6a3093; /* Morado oscuro */
+    margin-bottom: 1rem;
+}
+
+.success-button {
+    padding: 0.75rem 1.5rem;
+    background-color: #9c27b0; /* Morado */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 1.5rem;
+    transition: all 0.3s;
+}
+
+.success-button:hover {
+    background-color: #7b1fa2; /* Morado más oscuro */
+    transform: translateY(-2px);
+}
+
+/* Estilos para PayPal */
+.paypal-success {
+    background-color: #e8f5e9; /* Verde muy claro */
+    color: #2e7d32; /* Verde oscuro */
+    padding: 1rem;
+    border-radius: 4px;
+    margin-top: 1rem;
+    border: 1px solid #c8e6c9; /* Verde claro */
+}
+
+.paypal-success h4 {
+    margin-bottom: 0.5rem;
+    color: #2e7d32; /* Verde oscuro */
+}
+
+.paypal-error {
+    background-color: #ffebee; /* Rojo muy claro */
+    color: #c62828; /* Rojo oscuro */
+    padding: 1rem;
+    border-radius: 4px;
+    margin-top: 1rem;
+    border: 1px solid #ffcdd2; /* Rojo claro */
+}
+
+.paypal-error h4 {
+    margin-bottom: 0.5rem;
+    color: #c62828; /* Rojo oscuro */
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .nav-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .navbar-brand {
+        margin-bottom: 1rem;
+    }
+    
+    .info-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-container {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .formulario {
+        padding: 1.5rem;
+    }
+    
+    fieldset {
+        padding: 1rem;
+    }
+    
+    .payment-method {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .payment-method-icon {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    
+    .button-container {
+        flex-direction: column;
+    }
+    
+    .button, .button-reject {
+        width: 100%;
+    }
+}

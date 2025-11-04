@@ -1,0 +1,1 @@
+[2025-10-17 14:55:34] IP: ::1 - POST_ERROR: ERROR CRÍTICO: El tamaño del formulario (11790344 bytes) excede el límite permitido (8388608 bytes). Límite actual: 8M - UserAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 OPR/122.0.0.0

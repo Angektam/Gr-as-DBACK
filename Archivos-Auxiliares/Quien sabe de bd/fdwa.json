@@ -1,0 +1,5 @@
+[{"id":1, "nombre":"Gr\u00faa Titan X", "placa":"ABC-1234", "modelo":"Ford F-550 2018", "estado":"Disponible", "capacidad_kg":3000, "fecha_registro":"2025-05-26 12:19:51"},
+ {"id":2, "nombre":"Gr\u00faa Drag\u00f3n 250", "placa":"XYZ-5678", "modelo":"Chevrolet 3500HD 2020", "estado":"En servicio", "capacidad_kg":3500, "fecha_registro":"2025-05-26 12:19:51"},
+ {"id":3, "nombre":"Gr\u00faa F\u00e9nix Ultra", "placa":"JKL-9101", "modelo":"RAM 4500 2019", "estado":"Mantenimiento", "capacidad_kg":4000, "fecha_registro":"2025-05-26 12:19:51"},
+ {"id":4, "nombre":"Gr\u00faa Rayo Veloz", "placa":"MNO-1122", "modelo":"Isuzu NQR 2021", "estado":"Disponible", "capacidad_kg":2800, "fecha_registro":"2025-05-26 12:19:51"},
+ {"id":5, "nombre":"Gr\u00faa Pantera Negra", "placa":"PQR-3344", "modelo":"Toyota Dyna 2022", "estado":"Disponible", "capacidad_kg":3200, "fecha_registro":"2025-05-26 12:19:51"}]
