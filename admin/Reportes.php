@@ -4,7 +4,18 @@ $page_title = 'Reportes de Gastos - Grúas DBACK';
 $additional_css = ['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'];
 $additional_js = ['https://cdn.jsdelivr.net/npm/chart.js'];
 
-session_start();
+require_once '../conexion.php';
+
+// Iniciar sesión si no está iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Verificar sesión
+if (!isset($_SESSION['usuario_id'])) {
+    header("Location: ../Login.php");
+    exit();
+}
 ?>
 
 <?php include '../components/header-component.php'; ?>
