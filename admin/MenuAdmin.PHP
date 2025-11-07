@@ -1,14 +1,14 @@
 <?php
 // Configuración de la página
 $page_title = 'Grúas DBACK - Administración';
-$additional_css = ['./CSS/MenuAdmin.CSS', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'];
+$additional_css = ['../CSS/MenuAdmin.CSS', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'];
 
 session_start();
 $nombre = isset($_SESSION['usuario_nombre']) ? $_SESSION['usuario_nombre'] : 'Usuario';
 $cargo = isset($_SESSION['usuario_cargo']) ? $_SESSION['usuario_cargo'] : '';
 ?>
 
-<?php include 'header-component.php'; ?>
+<?php include '../components/header-component.php'; ?>
 
     <!-- Contenido principal mejorado -->
     <main class="main-content" id="main-content">
@@ -219,4 +219,4 @@ $cargo = isset($_SESSION['usuario_cargo']) ? $_SESSION['usuario_cargo'] : '';
             });
         }
     </script>
-<?php include 'footer-component.php'; ?>
+<?php include '../components/footer-component.php'; ?>

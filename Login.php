@@ -93,12 +93,9 @@ if ($connectionStatus && isset($_POST['Login'])) {
                     $_SESSION['usuario_usuario'] = $userData['Usuario'];
                     $_SESSION['login_time'] = time();
 
-                    echo "<script>
-                        setTimeout(function() {
-                            window.location.href = 'MenuAdmin.PHP';
-                        }, 2000);
-                    </script>";
-                    $connectionMessage = "<p style='color: green; text-align: center;'>Login exitoso! Redirigiendo...</p>";
+                    // Redireccionar a MenuAdmin
+                    header("Location: admin/MenuAdmin.PHP");
+                    exit();
                 } else {
                     // Contraseña incorrecta - incrementar intentos
                     $intentos = isset($_SESSION[$intentos_key]) ? $_SESSION[$intentos_key] + 1 : 1;
