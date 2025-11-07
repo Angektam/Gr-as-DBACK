@@ -4,26 +4,46 @@
  */
 if (!isset($base_path)) {
     // Obtener la ruta del archivo que está incluyendo este componente
-    $calling_file = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0]['file'] ?? __FILE__;
-    $calling_dir = dirname($calling_file);
-    $component_dir = __DIR__;
+    $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 5);
+    $calling_file = null;
     
-    // Calcular niveles para subir a la raíz
-    // Si el archivo está en modules/solicitudes/, necesitamos subir 2 niveles
-    // Si está en admin/, necesitamos subir 1 nivel
-    // Si está en la raíz, no necesitamos subir
+    // Buscar el primer archivo que no sea este componente ni sidebar-component
+    foreach ($backtrace as $trace) {
+        if (isset($trace['file']) && 
+            strpos($trace['file'], 'header-component.php') === false && 
+            strpos($trace['file'], 'sidebar-component.php') === false) {
+            $calling_file = $trace['file'];
+            break;
+        }
+    }
     
-    $relative_path = str_replace(realpath($_SERVER['DOCUMENT_ROOT'] . '/..'), '', realpath($calling_dir));
-    $levels = substr_count(str_replace('\\', '/', $relative_path), '/');
+    if (!$calling_file) {
+        $calling_file = __FILE__;
+    }
     
-    // Si estamos en modules/solicitudes/ (2 niveles), o admin/ (1 nivel), etc.
-    if (strpos(str_replace('\\', '/', $calling_dir), 'modules/solicitudes') !== false) {
+    $calling_dir = str_replace('\\', '/', dirname(realpath($calling_file)));
+    $root_dir = str_replace('\\', '/', realpath(dirname(__DIR__)));
+    
+    // Normalizar rutas
+    $calling_dir_normalized = str_replace('\\', '/', $calling_dir);
+    
+    // Determinar la ruta base según la ubicación del archivo que incluye el componente
+    if (strpos($calling_dir_normalized, '/modules/solicitudes') !== false || 
+        strpos($calling_dir_normalized, '\\modules\\solicitudes') !== false) {
+        // Desde modules/solicitudes/ necesitamos subir 2 niveles
         $base_path = '../../';
-    } elseif (strpos(str_replace('\\', '/', $calling_dir), 'admin') !== false || strpos(str_replace('\\', '/', $calling_dir), '/admin') !== false) {
+    } elseif (strpos($calling_dir_normalized, '/admin') !== false || 
+              strpos($calling_dir_normalized, '\\admin') !== false ||
+              strpos($calling_dir_normalized, '/admin/') !== false ||
+              strpos($calling_dir_normalized, '\\admin\\') !== false) {
+        // Desde admin/ necesitamos subir 1 nivel
         $base_path = '../';
-    } elseif (strpos(str_replace('\\', '/', $calling_dir), 'modules') !== false) {
+    } elseif (strpos($calling_dir_normalized, '/modules') !== false || 
+              strpos($calling_dir_normalized, '\\modules') !== false) {
+        // Desde cualquier otro módulo necesitamos subir 2 niveles
         $base_path = '../../';
     } else {
+        // Desde la raíz, no necesitamos subir
         $base_path = './';
     }
 }
