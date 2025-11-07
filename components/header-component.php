@@ -1,3 +1,9 @@
+<?php
+// Asegurar que el sistema de rutas esté cargado
+if (!defined('ROOT_PATH')) {
+    require_once __DIR__ . '/../config/paths.php';
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 
