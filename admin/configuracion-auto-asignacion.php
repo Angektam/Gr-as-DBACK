@@ -13,7 +13,7 @@ if (!isset($_SESSION['usuario_id'])) {
 if ($_SESSION['usuario_cargo'] !== 'Administrador') {
     $_SESSION['mensaje'] = "No tienes permisos para acceder a esta página";
     $_SESSION['tipo_mensaje'] = "error";
-    header("Location: MenuAdmin.php");
+    header("Location: MenuAdmin.PHP");
     exit();
 }
 
