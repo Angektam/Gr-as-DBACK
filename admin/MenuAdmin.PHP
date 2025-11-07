@@ -1,14 +1,18 @@
 <?php
+// Incluir sistema de rutas y configuración
+require_once __DIR__ . '/../config/paths.php';
+require_once __DIR__ . '/../config/config.php';
+
 // Configuración de la página
 $page_title = 'Grúas DBACK - Administración';
-$additional_css = ['./CSS/MenuAdmin.CSS', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'];
+$additional_css = [css_url('MenuAdmin.CSS'), 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'];
 
 session_start();
 $nombre = isset($_SESSION['usuario_nombre']) ? $_SESSION['usuario_nombre'] : 'Usuario';
 $cargo = isset($_SESSION['usuario_cargo']) ? $_SESSION['usuario_cargo'] : '';
 ?>
 
-<?php include 'header-component.php'; ?>
+<?php require_component('header-component.php'); ?>
 
     <!-- Contenido principal mejorado -->
     <main class="main-content" id="main-content">

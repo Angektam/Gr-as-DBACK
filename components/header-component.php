@@ -8,8 +8,8 @@
     <title><?php echo isset($page_title) ? $page_title : 'Grúas DBACK'; ?></title>
     
     <!-- Estilos principales -->
-    <link rel="stylesheet" href="./CSS/MenuAdmin.CSS">
-    <link rel="stylesheet" href="./CSS/Styles.CSS">
+    <link rel="stylesheet" href="<?php echo css_url('MenuAdmin.CSS'); ?>">
+    <link rel="stylesheet" href="<?php echo css_url('Styles.CSS'); ?>">
     
     <!-- Font Awesome para íconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -31,7 +31,7 @@
 <body>
     <!-- Contenedor principal -->
     <div class="app-container">
-        <?php include 'sidebar-component.php'; ?>
+        <?php require_component('sidebar-component.php'); ?>
         
         <!-- Contenido principal -->
         <main class="main-content" id="main-content">

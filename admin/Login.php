@@ -1,7 +1,11 @@
 <?php
+// Incluir sistema de rutas y configuración
+require_once __DIR__ . '/../config/paths.php';
+require_once __DIR__ . '/../config/config.php';
+
 // Incluir sistema de validaciones
-require_once 'utils/validaciones.php';
-require_once 'conexion.php';
+require_once UTILS_PATH . '/validaciones.php';
+require_once ROOT_PATH . '/conexion.php';
 
 // Iniciar sesión si no está iniciada
 if (session_status() === PHP_SESSION_NONE) {
