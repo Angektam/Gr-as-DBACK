@@ -38,9 +38,11 @@ $usuario_tipo = isset($_SESSION['usuario_tipo']) ? $_SESSION['usuario_tipo'] : '
     </div>
 
     <ul class="sidebar_list" role="menubar">
-        <li class="sidebar_element" role="menuitem" onclick="showSection('dashboard')" tabindex="0" aria-label="Inicio">
-            <i class="fas fa-home sidebar_icon" aria-hidden="true"></i>
-            <span class="sidebar_text">Inicio</span>
+        <li class="sidebar_element" role="menuitem" tabindex="0" aria-label="Inicio">
+            <a href="<?php echo $base_path; ?>admin/MenuAdmin.PHP" class="sidebar_link">
+                <i class="fas fa-home sidebar_icon" aria-hidden="true"></i>
+                <span class="sidebar_text">Inicio</span>
+            </a>
         </li>
         
         <li class="sidebar_element" role="menuitem" onclick="showSection('gruas')" tabindex="0" aria-label="Grúas">
@@ -112,7 +114,7 @@ $usuario_tipo = isset($_SESSION['usuario_tipo']) ? $_SESSION['usuario_tipo'] : '
         </div>
         
         <div class="sidebar_element" role="menuitem">
-            <a href="../cerrar_sesion.php" class="sidebar_link" aria-label="Cerrar sesión">
+            <a href="<?php echo $base_path; ?>cerrar_sesion.php" class="sidebar_link" aria-label="Cerrar sesión">
                 <i class="fas fa-sign-out-alt sidebar_icon" aria-hidden="true"></i>
                 <span class="sidebar_text">Cerrar Sesión</span>
             </a>
