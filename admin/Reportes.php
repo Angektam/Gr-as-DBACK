@@ -7,7 +7,7 @@ $additional_js = ['https://cdn.jsdelivr.net/npm/chart.js'];
 session_start();
 ?>
 
-<?php include 'header-component.php'; ?>
+<?php include '../components/header-component.php'; ?>
 
 <style>
 /* Estilos para la página de Reportes */
@@ -792,4 +792,4 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 </style>
 
-<?php include 'footer-component.php'; ?>
+<?php include '../components/footer-component.php'; ?>

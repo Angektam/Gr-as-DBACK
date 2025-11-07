@@ -1,11 +1,11 @@
 <?php
-require_once 'conexion.php';
+require_once '../conexion.php';
 require_once 'AutoAsignacionGruas.php';
 // La sesión ya se inicia en config.php
 
 // Verificar sesión y permisos de administrador
 if (!isset($_SESSION['usuario_id'])) {
-    header("Location: Login.php");
+    header("Location: ../Login.php");
     exit();
 }
 

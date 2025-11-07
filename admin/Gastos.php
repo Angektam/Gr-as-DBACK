@@ -3,12 +3,12 @@
 $page_title = 'Gestión de Gastos - Grúas DBACK';
 $additional_css = ['./CSS/Gastos.css', 'https://cdn.jsdelivr.net/npm/chart.js'];
 
-require_once 'conexion.php';
-require_once 'utils/validaciones.php';
+require_once '../conexion.php';
+require_once '../utils/validaciones.php';
 
 // Verificar sesión
 if (!isset($_SESSION['usuario_id'])) {
-    header('Location: Login.php');
+    header('Location: ../Login.php');
     exit;
 }
 
@@ -402,7 +402,7 @@ if (isset($_GET['export'])) {
 }
 ?>
 
-<?php include 'header-component.php'; ?>
+<?php include '../components/header-component.php'; ?>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -1567,4 +1567,4 @@ if (isset($_GET['export'])) {
             });
         });
     </script>
-<?php include 'footer-component.php'; ?>
+<?php include '../components/footer-component.php'; ?>

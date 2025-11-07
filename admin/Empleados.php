@@ -12,12 +12,12 @@
  * - Historial de cambios
  */
 
-require_once 'conexion.php';
-require_once 'utils/validaciones.php';
+require_once '../conexion.php';
+require_once '../utils/validaciones.php';
 
 // Verificar sesión
 if (!isset($_SESSION['usuario_id'])) {
-    header("Location: Login.php");
+    header("Location: ../Login.php");
     exit();
 }
 

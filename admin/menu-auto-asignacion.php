@@ -1,14 +1,14 @@
 <?php
 // Configuración de la página
 $page_title = 'Auto-Asignación - Grúas DBACK';
-$additional_css = ['./CSS/AutoAsignacion.css'];
+$additional_css = ['../CSS/AutoAsignacion.css'];
 
-require_once 'conexion.php';
+require_once '../conexion.php';
 require_once 'AutoAsignacionGruas.php';
 
 // VALIDACIÓN 1: Verificar sesión activa
 if (!isset($_SESSION['usuario_id'])) {
-    header("Location: Login.php");
+    header("Location: ../Login.php");
     exit();
 }
 
@@ -344,7 +344,7 @@ $usuario_cargo = $_SESSION['usuario_cargo'] ?? 'Operador';
 </head>
 <body>
 
-<?php include 'header-component.php'; ?>
+<?php include '../components/header-component.php'; ?>
 
 <div class="container">
     <header class="admin-header">
@@ -1090,7 +1090,7 @@ Para soporte técnico, contacte al administrador del sistema.
 }
 </script>
 
-<?php include 'footer-component.php'; ?>
+<?php include '../components/footer-component.php'; ?>
 
 </body>
 </html>

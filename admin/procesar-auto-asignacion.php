@@ -7,7 +7,7 @@
  * Cron: */5 * * * * php /ruta/al/proyecto/procesar-auto-asignacion.php
  */
 
-require_once 'conexion.php';
+require_once '../conexion.php';
 require_once 'AutoAsignacionGruas.php';
 
 // Configurar logging
