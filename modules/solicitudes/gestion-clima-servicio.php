@@ -1,18 +1,23 @@
 <?php
-require_once 'conexion.php';
-require_once 'AutoAsignacionGruas.php';
+require_once '../../conexion.php';
+
+// Iniciar sesión si no está iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require_once '../../admin/AutoAsignacionGruas.php';
 // La sesión ya se inicia en config.php
 
 // Verificar sesión y permisos de administrador
 if (!isset($_SESSION['usuario_id'])) {
-    header("Location: Login.php");
+    header("Location: ../../Login.php");
     exit();
 }
 
 if ($_SESSION['usuario_cargo'] !== 'Administrador') {
     $_SESSION['mensaje'] = "No tienes permisos para acceder a esta página";
     $_SESSION['tipo_mensaje'] = "error";
-    header("Location: MenuAdmin.php");
+    header("Location: ../../admin/MenuAdmin.PHP");
     exit();
 }
 

@@ -3,12 +3,16 @@
 $page_title = 'Procesar Solicitudes - Grúas DBACK';
 $additional_css = ['https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css', 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css'];
 
-require_once 'conexion.php';
-// La sesión ya se inicia en config.php que es incluido por conexion.php
+require_once '../../conexion.php';
+
+// Iniciar sesión si no está iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Verificar sesión
 if (!isset($_SESSION['usuario_id'])) {
-    header("Location: login.php");
+    header("Location: ../../Login.php");
     exit();
 }
 
@@ -116,7 +120,7 @@ $tipo_mensaje = $_SESSION['tipo_mensaje'] ?? null;
 unset($_SESSION['mensaje'], $_SESSION['tipo_mensaje']);
 ?>
 
-<?php include 'header-component.php'; ?>
+<?php include '../../components/header-component.php'; ?>
     <style>
     :root {
     --primary-color: #0d6efd;
@@ -587,4 +591,4 @@ main {
             });
         });
     </script>
-<?php include 'footer-component.php'; ?>
+<?php include '../../components/footer-component.php'; ?>

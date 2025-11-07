@@ -1,10 +1,15 @@
 <?php
-require_once 'conexion.php';
+require_once '../../conexion.php';
 // La sesión ya se inicia en config.php que es incluido por conexion.php
+
+// Iniciar sesión si no está iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Verificar si el usuario está logueado
 if (!isset($_SESSION['usuario_id'])) {
-    header("Location: login.php");
+    header("Location: ../../Login.php");
     exit();
 }
 

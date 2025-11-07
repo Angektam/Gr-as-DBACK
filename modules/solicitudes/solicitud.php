@@ -1,7 +1,7 @@
 <?php
 // Incluir sistema de validaciones
-require_once 'utils/validaciones.php';
-require_once 'conexion.php';
+require_once '../../utils/validaciones.php';
+require_once '../../conexion.php';
 
 // Verificar conexión
 if (!isset($conn) || $conn->connect_error) {
@@ -184,9 +184,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Solicita nuestro servicio de grúas 24/7. Asistencia rápida y profesional para todo tipo de vehículos.">
     <title>Solicitar Servicio de Grúa | Grúas DBACK</title>
-    <link rel="stylesheet" href="CSS/Solicitud_ARCO.css">
-    <link rel="stylesheet" href="js/validaciones.css">
-    <script src="js/validaciones.js" defer></script>
+    <link rel="stylesheet" href="../../CSS/Solicitud_ARCO.CSS">
+    <link rel="stylesheet" href="../../js/validaciones.css">
+    <script src="../../js/validaciones.js" defer></script>
 </head>
 <body>
     <header>

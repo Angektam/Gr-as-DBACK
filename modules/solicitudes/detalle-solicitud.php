@@ -4,11 +4,16 @@
  * Versión mejorada con mejor UX y funcionalidades adicionales
  */
 
-require_once 'conexion.php';
+require_once '../../conexion.php';
+
+// Iniciar sesión si no está iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Verificar si el usuario está logueado
 if (!isset($_SESSION['usuario_id'])) {
-    header("Location: Login.php");
+    header("Location: ../../Login.php");
     exit();
 }
 

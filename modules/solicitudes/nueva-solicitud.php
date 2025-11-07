@@ -4,14 +4,18 @@ $page_title = 'Nueva Solicitud - Grúas DBACK';
 $additional_css = [
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css',
-    './CSS/panel-solicitud.CSS'
+    '../../CSS/panel-solicitud.css'
 ];
 
-require_once 'conexion.php';
-// La sesión ya se inicia en config.php que es incluido por conexion.php
+require_once '../../conexion.php';
+
+// Iniciar sesión si no está iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if (!isset($_SESSION['usuario_id'])) {
-    header("Location: login.php");
+    header("Location: ../../Login.php");
     exit();
 }
 
@@ -81,7 +85,7 @@ $query = "SELECT id, nombre, telefono FROM clientes ORDER BY nombre";
 $clientes_result = $conn->query($query);
 ?>
 
-<?php include 'header-component.php'; ?>
+<?php include '../../components/header-component.php'; ?>
 
 <div class="container-fluid">
   <!-- Encabezado -->
@@ -249,4 +253,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php include 'footer-component.php'; ?>
+<?php include '../../components/footer-component.php'; ?>
