@@ -81,39 +81,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             if (!$validador->tieneErrores()) {
-            $query = "INSERT INTO empleados 
-                     (Nombres, Apellido1, Apellido2, RFC, Nomina, Fecha_Ingreso, Puesto, 
-                      departamento, Sueldo, telefono, email, licencia, direccion, estado) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            
-            $stmt = $conn->prepare($query);
-            $stmt->bind_param("ssssissdssssss", $nombres, $apellido1, $apellido2, $rfc, $nomina, 
-                             $fecha_ingreso, $puesto, $departamento, $sueldo, $telefono, 
-                             $email, $licencia, $direccion, $estado);
-            
-            if ($stmt->execute()) {
-                $tipo_mensaje = 'success';
-                $mensaje = '✅ Empleado agregado exitosamente';
+                $query = "INSERT INTO empleados 
+                         (Nombres, Apellido1, Apellido2, RFC, Nomina, Fecha_Ingreso, Puesto, 
+                          departamento, Sueldo, telefono, email, licencia, direccion, estado) 
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 
-                // Registrar en historial
-                $empleado_id = $stmt->insert_id;
-                $usuario_id = $_SESSION['usuario_id'];
-                $accion = "Empleado creado: $nombres $apellido1";
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param("ssssissdssssss", $nombres, $apellido1, $apellido2, $rfc, $nomina, 
+                                 $fecha_ingreso, $puesto, $departamento, $sueldo, $telefono, 
+                                 $email, $licencia, $direccion, $estado);
                 
-                $log_query = "INSERT INTO historial_empleados (empleado_id, usuario_id, accion, fecha) 
-                             VALUES (?, ?, ?, NOW())";
-                $log_stmt = $conn->prepare($log_query);
-                $log_stmt->bind_param("iis", $empleado_id, $usuario_id, $accion);
-                $log_stmt->execute();
+                if ($stmt->execute()) {
+                    $tipo_mensaje = 'success';
+                    $mensaje = '✅ Empleado agregado exitosamente';
+                    
+                    // Registrar en historial
+                    $empleado_id = $stmt->insert_id;
+                    $usuario_id = $_SESSION['usuario_id'];
+                    $accion = "Empleado creado: $nombres $apellido1";
+                    
+                    $log_query = "INSERT INTO historial_empleados (empleado_id, usuario_id, accion, fecha) 
+                                 VALUES (?, ?, ?, NOW())";
+                    $log_stmt = $conn->prepare($log_query);
+                    $log_stmt->bind_param("iis", $empleado_id, $usuario_id, $accion);
+                    $log_stmt->execute();
+                    $stmt->close();
+                } else {
+                    $tipo_mensaje = 'error';
+                    $mensaje = '❌ Error al agregar empleado: ' . $stmt->error;
+                    $stmt->close();
+                }
             } else {
                 $tipo_mensaje = 'error';
-                $mensaje = '❌ Error al agregar empleado: ' . $conn->error;
+                $mensaje = '❌ Errores de validación: ' . $validador->obtenerErroresString(', ');
             }
         }
-    }
-    
-    // EDITAR EMPLEADO
-    elseif ($action === 'edit') {
+        
+        // EDITAR EMPLEADO
+        elseif ($action === 'edit') {
         $id = intval($_POST['id']);
         $nombres = $conn->real_escape_string(trim($_POST['nombres']));
         $apellido1 = $conn->real_escape_string(trim($_POST['apellido1']));
@@ -187,15 +192,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // REACTIVAR EMPLEADO
     elseif ($action === 'activate') {
-        $id = intval($_POST['id']);
-        
-        $query = "UPDATE empleados SET estado='activo', fecha_baja=NULL WHERE ID_Empleado=?";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param("i", $id);
-        
-        if ($stmt->execute()) {
-            $tipo_mensaje = 'success';
-            $mensaje = '✅ Empleado reactivado exitosamente';
+            if ($id <= 0) {
+                $tipo_mensaje = 'error';
+                $mensaje = '❌ ID de empleado inválido';
+            } else {
+                $query = "UPDATE empleados SET estado='activo', fecha_baja=NULL WHERE ID_Empleado=?";
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param("i", $id);
+                
+                if ($stmt->execute()) {
+                    $tipo_mensaje = 'success';
+                    $mensaje = '✅ Empleado reactivado exitosamente';
+                    $stmt->close();
+                } else {
+                    $tipo_mensaje = 'error';
+                    $mensaje = '❌ Error al reactivar empleado: ' . $stmt->error;
+                    $stmt->close();
+                }
+            }
         }
     }
 }
