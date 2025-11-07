@@ -2,39 +2,40 @@
    GESTIÓN DE GRÚAS - SISTEMA DBACK
    Temática Morada Corporativa
    =================================== */
+@import url('variables.css');
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Arial', sans-serif;
+    font-family: var(--font-family-primary);
 }
 
 body {
-    background-color: #f5f5f5;
+    background-color: var(--bg-secondary);
     padding: 20px;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .container, .main-container {
     max-width: 1200px;
     margin: 0 auto;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background-color: var(--bg-primary);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-lg);
     overflow: hidden;
 }
 
 header, .header-section {
-    background-color: #6a0dad;
-    color: white;
+    background: var(--bg-gradient-primary);
+    color: var(--text-white);
     padding: 20px;
     text-align: center;
 }
 
 h1 {
     margin-bottom: 10px;
-    color: white;
+    color: var(--text-white);
 }
 
 .dashboard, .stats-grid {
@@ -45,30 +46,30 @@ h1 {
 }
 
 .stat-card {
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background-color: var(--bg-primary);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-md);
     padding: 20px;
     text-align: center;
 }
 
 .stat-card h3 {
-    color: #666;
+    color: var(--text-secondary);
     margin-bottom: 10px;
 }
 
 .stat-card .number {
     font-size: 32px;
     font-weight: bold;
-    color: #8a2be2;
+    color: var(--secondary-color);
 }
 
 .filter-controls, .filters-section {
     display: flex;
     justify-content: space-between;
     padding: 20px;
-    background-color: #f9f9f9;
-    border-bottom: 1px solid #eee;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color-light);
     flex-wrap: wrap;
     gap: 10px;
 }
@@ -86,23 +87,26 @@ h1 {
 
 input[type="text"], input[type="number"], input[type="date"], select, textarea, .form-control, .form-select {
     padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
     min-width: 200px;
 }
 
 button, .btn {
-    background-color: #6a0dad;
-    color: white;
+    background: var(--bg-gradient-primary);
+    color: var(--text-white);
     border: none;
     padding: 10px 15px;
-    border-radius: 4px;
+    border-radius: var(--border-radius-sm);
     cursor: pointer;
     margin-left: 10px;
+    transition: all var(--transition-base);
 }
 
 button:hover, .btn:hover {
-    background-color: #4b0082;
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .cranes-list, .table-container {
@@ -115,29 +119,29 @@ table, .table {
 }
 
 th, td {
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     padding: 12px;
     text-align: left;
 }
 
 th {
-    background-color: #f2f2f2;
+    background-color: var(--gray-200);
     font-weight: bold;
-    color: #333;
+    color: var(--text-primary);
 }
 
 thead th {
-    background-color: #f2f2f2;
+    background-color: var(--gray-200);
     font-weight: bold;
-    color: #333;
+    color: var(--text-primary);
 }
 
 tr:nth-child(even) {
-    background-color: #f9f9f9;
+    background-color: var(--bg-secondary);
 }
 
 tr:hover {
-    background-color: #f1f1f1;
+    background-color: var(--gray-100);
 }
 
 .status, .badge {
@@ -152,18 +156,18 @@ tr:hover {
 }
 
 .status-available, .badge.bg-success {
-    background-color: #6a0dad !important;
-    color: white !important;
+    background: var(--bg-gradient-primary) !important;
+    color: var(--text-white) !important;
 }
 
 .status-in-use, .badge.bg-warning {
-    background-color: #9370db !important;
-    color: white !important;
+    background: linear-gradient(135deg, var(--primary-light), var(--secondary-color)) !important;
+    color: var(--text-white) !important;
 }
 
 .status-maintenance, .badge.bg-danger {
-    background-color: #4b0082 !important;
-    color: white !important;
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-color)) !important;
+    color: var(--text-white) !important;
 }
 
 /* ================================================
@@ -187,15 +191,15 @@ tr:hover {
 }
 
 .modal-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 15px 15px 0 0;
+    background: var(--bg-gradient-secondary);
+    color: var(--text-white);
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
     border-bottom: none;
     padding: 20px 25px;
 }
 
 .modal-title {
-    color: white;
+    color: var(--text-white);
     font-weight: 600;
     font-size: 1.3rem;
 }
@@ -232,12 +236,12 @@ tr:hover {
 }
 
 .modal .btn-secondary {
-    background: #6c757d;
+    background: var(--text-secondary);
     border: none;
 }
 
 .modal .btn-secondary:hover {
-    background: #5a6268;
+    background: var(--gray-600);
 }
 
 .form-grid {
@@ -258,7 +262,7 @@ label, .form-label {
     display: block;
     margin-bottom: 5px;
     font-weight: bold;
-    color: #333;
+    color: var(--text-primary);
 }
 
 textarea {
@@ -272,23 +276,23 @@ textarea {
 }
 
 .view-btn, .btn-success {
-    background-color: #6a0dad;
-    color: white;
+    background: var(--bg-gradient-primary);
+    color: var(--text-white);
 }
 
 .edit-btn, .btn-warning {
-    background-color: #9370db;
-    color: white;
+    background: linear-gradient(135deg, var(--primary-light), var(--secondary-color));
+    color: var(--text-white);
 }
 
 .delete-btn, .btn-danger {
-    background-color: #4b0082;
-    color: white;
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+    color: var(--text-white);
 }
 
 .btn-primary {
-    background-color: #6a0dad;
-    color: white;
+    background: var(--bg-gradient-primary);
+    color: var(--text-white);
 }
 
 .pagination {
@@ -300,18 +304,18 @@ textarea {
 
 .pagination button {
     margin: 0 5px;
-    background-color: #6a0dad;
-    color: white;
+    background: var(--bg-gradient-primary);
+    color: var(--text-white);
 }
 
 .current-page, .page-item.active .page-link {
-    background-color: #8a2be2 !important;
-    color: white;
+    background: var(--bg-gradient-primary) !important;
+    color: var(--text-white) !important;
 }
 
 .tab-container {
-    border-bottom: 1px solid #ddd;
-    background-color: #f9f9f9;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
 }
 
 .tabs {
@@ -323,14 +327,14 @@ textarea {
     padding: 15px 20px;
     cursor: pointer;
     border-bottom: 3px solid transparent;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .tabs li.active {
-    border-bottom: 3px solid #6a0dad;
+    border-bottom: 3px solid var(--primary-color);
     font-weight: bold;
-    background-color: #fff;
-    color: #6a0dad;
+    background-color: var(--bg-primary);
+    color: var(--primary-color);
 }
 
 .tab-content {

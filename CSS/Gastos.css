@@ -2,55 +2,14 @@
    GESTIÓN DE GASTOS - SISTEMA DBACK
    Diseño Moderno y Responsivo
    =================================== */
+@import url('variables.css');
 
+/* Alias para compatibilidad con nombres anteriores */
 :root {
-    /* Paleta de colores principal */
-    --primary-color: #6a0dad;
-    --primary-dark: #4b0082;
-    --primary-light: #9370db;
-    --secondary-color: #8a2be2;
-    --accent-color: #667eea;
-    
-    /* Colores de fondo */
-    --bg-primary: #ffffff;
-    --bg-secondary: #f8f9fa;
-    --bg-tertiary: #f1f3f4;
-    --bg-dark: #2c3e50;
-    
-    /* Colores de texto */
-    --text-primary: #2c3e50;
-    --text-secondary: #6c757d;
-    --text-muted: #adb5bd;
-    --text-white: #ffffff;
-    
-    /* Colores de estado */
-    --success: #28a745;
-    --warning: #ffc107;
-    --danger: #dc3545;
-    --info: #17a2b8;
-    
-    /* Sombras */
-    --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
-    --shadow-md: 0 4px 8px rgba(0,0,0,0.15);
-    --shadow-lg: 0 8px 16px rgba(0,0,0,0.2);
-    --shadow-xl: 0 12px 24px rgba(0,0,0,0.25);
-    
-    /* Bordes */
-    --border-radius: 8px;
-    --border-radius-lg: 12px;
-    --border-radius-xl: 16px;
-    
-    /* Espaciado */
-    --spacing-xs: 4px;
-    --spacing-sm: 8px;
-    --spacing-md: 16px;
-    --spacing-lg: 24px;
-    --spacing-xl: 32px;
-    
-    /* Transiciones */
-    --transition-fast: 0.15s ease;
-    --transition-normal: 0.3s ease;
-    --transition-slow: 0.5s ease;
+    --success: var(--success-color);
+    --warning: var(--warning-color);
+    --danger: var(--danger-color);
+    --info: var(--info-color);
 }
 
 * {
@@ -70,13 +29,13 @@ html {
 }
 
 body {
-    font-family: 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    font-family: var(--font-family-primary);
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
     color: var(--text-primary);
     line-height: 1.6;
     min-height: 100vh;
     padding: var(--spacing-md);
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 /* Mejoras de accesibilidad */
@@ -135,7 +94,7 @@ body {
 }
 
 header, .header-section {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    background: var(--bg-gradient-primary);
     color: var(--text-white);
     padding: var(--spacing-xl);
     text-align: center;
@@ -466,10 +425,10 @@ th, td {
 }
 
 th {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    background: var(--bg-gradient-primary);
     color: var(--text-white);
     font-weight: 600;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     position: sticky;
@@ -478,7 +437,7 @@ th {
 }
 
 thead th {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    background: var(--bg-gradient-primary);
     color: var(--text-white);
     font-weight: 600;
 }
@@ -559,33 +518,33 @@ tbody tr:last-child {
 }
 
 .status-available, .badge.bg-success {
-    background: linear-gradient(135deg, var(--success), #20c997) !important;
+    background: linear-gradient(135deg, var(--success-color), var(--success-dark)) !important;
     color: var(--text-white) !important;
     box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
 }
 
 .status-in-use, .badge.bg-warning {
-    background: linear-gradient(135deg, var(--warning), #fd7e14) !important;
+    background: linear-gradient(135deg, var(--warning-color), var(--warning-dark)) !important;
     color: var(--text-white) !important;
     box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
 }
 
 .status-maintenance, .badge.bg-danger {
-    background: linear-gradient(135deg, var(--danger), #e74c3c) !important;
+    background: linear-gradient(135deg, var(--danger-color), var(--danger-dark)) !important;
     color: var(--text-white) !important;
     box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
 }
 
 .badge.bg-info {
-    background: linear-gradient(135deg, var(--info), #17a2b8) !important;
+    background: linear-gradient(135deg, var(--info-color), var(--info-dark)) !important;
     color: var(--text-white) !important;
     box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
 }
 
 .badge.bg-primary {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important;
+    background: var(--bg-gradient-primary) !important;
     color: var(--text-white) !important;
-    box-shadow: 0 2px 8px rgba(106, 13, 173, 0.3);
+    box-shadow: var(--shadow-primary);
 }
 
 /* Estados con iconos */
@@ -647,7 +606,7 @@ tbody tr:last-child {
 }
 
 .modal-header {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    background: var(--bg-gradient-primary);
     color: var(--text-white);
     border-radius: var(--border-radius-xl) var(--border-radius-xl) 0 0;
     border-bottom: none;
@@ -710,7 +669,7 @@ tbody tr:last-child {
 }
 
 .modal .btn-success {
-    background: linear-gradient(135deg, var(--success), #20c997);
+    background: linear-gradient(135deg, var(--success-color), var(--success-dark));
     border: none;
     color: var(--text-white);
 }
@@ -732,7 +691,7 @@ tbody tr:last-child {
 }
 
 .modal .btn-danger {
-    background: linear-gradient(135deg, var(--danger), #e74c3c);
+    background: linear-gradient(135deg, var(--danger-color), var(--danger-dark));
     border: none;
     color: var(--text-white);
 }
@@ -840,14 +799,14 @@ textarea {
 }
 
 .view-btn, .btn-success {
-    background: linear-gradient(135deg, var(--success), #20c997);
+    background: linear-gradient(135deg, var(--success-color), var(--success-dark));
     color: var(--text-white);
     border: none;
     padding: 8px 16px;
-    border-radius: var(--border-radius);
-    font-size: 12px;
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-xs);
     font-weight: 500;
-    transition: all var(--transition-normal);
+    transition: all var(--transition-base);
 }
 
 .view-btn:hover, .btn-success:hover {
@@ -856,14 +815,14 @@ textarea {
 }
 
 .edit-btn, .btn-warning {
-    background: linear-gradient(135deg, var(--warning), #fd7e14);
+    background: linear-gradient(135deg, var(--warning-color), var(--warning-dark));
     color: var(--text-white);
     border: none;
     padding: 8px 16px;
-    border-radius: var(--border-radius);
-    font-size: 12px;
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-xs);
     font-weight: 500;
-    transition: all var(--transition-normal);
+    transition: all var(--transition-base);
 }
 
 .edit-btn:hover, .btn-warning:hover {
@@ -872,14 +831,14 @@ textarea {
 }
 
 .delete-btn, .btn-danger {
-    background: linear-gradient(135deg, var(--danger), #e74c3c);
+    background: linear-gradient(135deg, var(--danger-color), var(--danger-dark));
     color: var(--text-white);
     border: none;
     padding: 8px 16px;
-    border-radius: var(--border-radius);
-    font-size: 12px;
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-xs);
     font-weight: 500;
-    transition: all var(--transition-normal);
+    transition: all var(--transition-base);
 }
 
 .delete-btn:hover, .btn-danger:hover {
@@ -888,19 +847,19 @@ textarea {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    background: var(--bg-gradient-primary);
     color: var(--text-white);
     border: none;
     padding: 8px 16px;
-    border-radius: var(--border-radius);
-    font-size: 12px;
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-xs);
     font-weight: 500;
-    transition: all var(--transition-normal);
+    transition: all var(--transition-base);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(106, 13, 173, 0.3);
+    box-shadow: var(--shadow-primary);
 }
 
 /* Botones con iconos */

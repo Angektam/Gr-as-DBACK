@@ -1,5 +1,6 @@
 /* CSS para MenuAdmin.PHP - Panel de Administración */
 /* Temática Morada Corporativa - Sistema DBACK */
+@import url('variables.css');
 
 .menu-admin-container {
     max-width: 1200px;
@@ -8,13 +9,13 @@
 }
 
 .menu-admin-header {
-    background: linear-gradient(135deg, #6a0dad 0%, #4b0082 100%);
-    color: white;
+    background: var(--bg-gradient-primary);
+    color: var(--text-white);
     padding: 40px;
-    border-radius: 20px;
+    border-radius: var(--border-radius-2xl);
     margin-bottom: 40px;
     text-align: center;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-xl);
     position: relative;
     overflow: hidden;
 }
@@ -58,12 +59,12 @@
 }
 
 .stat-card {
-    background: white;
+    background: var(--bg-primary);
     padding: 30px;
-    border-radius: 15px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
     text-align: center;
-    transition: all 0.3s ease;
+    transition: all var(--transition-base);
     position: relative;
     overflow: hidden;
 }
@@ -75,12 +76,12 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #6a0dad, #8a2be2, #9370db, #4b0082);
+    background: var(--bg-gradient-primary);
 }
 
 .stat-card:hover {
     transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-xl);
 }
 
 .stat-icon {
@@ -90,19 +91,19 @@
 }
 
 .stat-card.primary .stat-icon {
-    color: #6a0dad;
+    color: var(--primary-color);
 }
 
 .stat-card.success .stat-icon {
-    color: #28a745;
+    color: var(--success-color);
 }
 
 .stat-card.warning .stat-icon {
-    color: #ffc107;
+    color: var(--warning-color);
 }
 
 .stat-card.danger .stat-icon {
-    color: #dc3545;
+    color: var(--danger-color);
 }
 
 .stat-number {
@@ -185,29 +186,29 @@
 }
 
 .action-btn {
-    background: linear-gradient(90deg, #6a0dad 0%, #4b0082 100%);
-    color: white;
+    background: var(--bg-gradient-primary);
+    color: var(--text-white);
     padding: 15px 30px;
     border: none;
-    border-radius: 25px;
+    border-radius: var(--border-radius-full);
     text-decoration: none;
     display: inline-block;
-    transition: all 0.3s ease;
+    transition: all var(--transition-base);
     font-weight: 600;
     position: relative;
     z-index: 2;
-    box-shadow: 0 5px 15px rgba(106, 13, 173, 0.3);
+    box-shadow: var(--shadow-primary);
 }
 
 .action-btn:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(106, 13, 173, 0.4);
-    color: white;
+    box-shadow: var(--shadow-primary-hover);
+    color: var(--text-white);
     text-decoration: none;
 }
 
 .action-btn.success {
-    background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+    background: linear-gradient(90deg, var(--success-color) 0%, var(--success-dark) 100%);
     box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
 }
 
@@ -216,18 +217,18 @@
 }
 
 .action-btn.warning {
-    background: linear-gradient(90deg, #ffc107 0%, #fd7e14 100%);
-    color: #212529;
+    background: linear-gradient(90deg, var(--warning-color) 0%, var(--warning-dark) 100%);
+    color: var(--text-primary);
     box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
 }
 
 .action-btn.warning:hover {
     box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
-    color: #212529;
+    color: var(--text-primary);
 }
 
 .action-btn.danger {
-    background: linear-gradient(90px, #dc3545 0%, #e83e8c 100%);
+    background: linear-gradient(90deg, var(--danger-color) 0%, var(--danger-dark) 100%);
     box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
 }
 
