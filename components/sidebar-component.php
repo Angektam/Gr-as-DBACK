@@ -28,21 +28,21 @@ $usuario_tipo = isset($_SESSION['usuario_tipo']) ? $_SESSION['usuario_tipo'] : '
         </li>
         
         <li class="sidebar_element" role="menuitem" onclick="showSection('gruas')" tabindex="0" aria-label="Grúas">
-            <a href="../admin/Gruas.php" class="sidebar_link">
+            <a href="Gruas.php" class="sidebar_link">
                 <i class="fas fa-truck sidebar_icon" aria-hidden="true"></i>
                 <span class="sidebar_text">Grúas</span>
             </a>
         </li>
         
         <li class="sidebar_element" role="menuitem" onclick="showSection('gastos')" tabindex="0" aria-label="Gastos">
-            <a href="../admin/Gastos.php" class="sidebar_link">
+            <a href="Gastos.php" class="sidebar_link">
                 <i class="fas fa-money-bill-wave sidebar_icon" aria-hidden="true"></i>
                 <span class="sidebar_text">Gastos</span>
             </a>
         </li>
         
         <li class="sidebar_element" role="menuitem" onclick="showSection('empleados')" tabindex="0" aria-label="Empleados">
-            <a href="../admin/Empleados.php" class="sidebar_link">
+            <a href="Empleados.php" class="sidebar_link">
                 <i class="fas fa-users sidebar_icon" aria-hidden="true"></i>
                 <span class="sidebar_text">Empleados</span>
             </a>
@@ -56,7 +56,7 @@ $usuario_tipo = isset($_SESSION['usuario_tipo']) ? $_SESSION['usuario_tipo'] : '
         </li>
         
         <li class="sidebar_element" role="menuitem" onclick="showSection('auto-asignacion')" tabindex="0" aria-label="Auto-asignación">
-            <a href="../admin/menu-auto-asignacion.php" class="sidebar_link">
+            <a href="menu-auto-asignacion.php" class="sidebar_link">
                 <i class="fas fa-robot sidebar_icon" aria-hidden="true"></i>
                 <span class="sidebar_text">Auto-Asignación</span>
             </a>
@@ -64,7 +64,7 @@ $usuario_tipo = isset($_SESSION['usuario_tipo']) ? $_SESSION['usuario_tipo'] : '
 
         <?php if ($usuario_tipo === 'admin'): ?>
         <li class="sidebar_element" role="menuitem" onclick="showSection('configuracion')" tabindex="0" aria-label="Configuración">
-            <a href="../admin/configuracion-auto-asignacion.php" class="sidebar_link">
+            <a href="configuracion-auto-asignacion.php" class="sidebar_link">
                 <i class="fas fa-cog sidebar_icon" aria-hidden="true"></i>
                 <span class="sidebar_text">Configuración</span>
             </a>
@@ -72,7 +72,7 @@ $usuario_tipo = isset($_SESSION['usuario_tipo']) ? $_SESSION['usuario_tipo'] : '
         <?php endif; ?>
 
         <li class="sidebar_element" role="menuitem" onclick="showSection('reportes')" tabindex="0" aria-label="Reportes">
-            <a href="../admin/Reportes.php" class="sidebar_link">
+            <a href="Reportes.php" class="sidebar_link">
                 <i class="fas fa-chart-bar sidebar_icon" aria-hidden="true"></i>
                 <span class="sidebar_text">Reportes</span>
             </a>
