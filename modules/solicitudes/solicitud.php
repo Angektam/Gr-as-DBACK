@@ -192,13 +192,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <header>
         <nav class="navbar" aria-label="Navegación principal">
             <div class="nav-content">
-                <a href="index.php" class="navbar-brand">
+                <a href="../../index.html" class="navbar-brand">
                     <img src="../../assets/images/LogoDBACK.png" alt="Logo DBACK" width="50" height="50">
                     <h1>Grúas DBACK</h1>
                 </a>
                 
                 <div class="nav-links">
-                    <a href="index.php" class="cta-button">Inicio</a>
+                    <a href="../../index.html" class="cta-button">Inicio</a>
                     <a href="tel:+526688253351" class="cta-button accent">Llamar ahora</a>
                 </div>
             </div>
