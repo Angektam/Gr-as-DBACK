@@ -1,9 +1,3 @@
-<?php
-// Asegurar que el sistema de rutas esté cargado
-if (!defined('ROOT_PATH')) {
-    require_once __DIR__ . '/../config/paths.php';
-}
-?>
 <!DOCTYPE html>
 <html lang="es">
 
@@ -14,8 +8,8 @@ if (!defined('ROOT_PATH')) {
     <title><?php echo isset($page_title) ? $page_title : 'Grúas DBACK'; ?></title>
     
     <!-- Estilos principales -->
-    <link rel="stylesheet" href="<?php echo css_url('MenuAdmin.CSS'); ?>">
-    <link rel="stylesheet" href="<?php echo css_url('Styles.CSS'); ?>">
+    <link rel="stylesheet" href="./CSS/MenuAdmin.CSS">
+    <link rel="stylesheet" href="./CSS/Styles.CSS">
     
     <!-- Font Awesome para íconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -37,7 +31,7 @@ if (!defined('ROOT_PATH')) {
 <body>
     <!-- Contenedor principal -->
     <div class="app-container">
-        <?php require_component('sidebar-component.php'); ?>
+        <?php include 'sidebar-component.php'; ?>
         
         <!-- Contenido principal -->
         <main class="main-content" id="main-content">

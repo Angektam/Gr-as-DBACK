@@ -4,11 +4,6 @@
  * Archivo: sidebar-component.php
  */
 
-// Asegurar que el sistema de rutas esté cargado
-if (!defined('ROOT_PATH')) {
-    require_once __DIR__ . '/../config/paths.php';
-}
-
 // Iniciar sesión si no está iniciada
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
@@ -22,7 +17,7 @@ $usuario_tipo = isset($_SESSION['usuario_tipo']) ? $_SESSION['usuario_tipo'] : '
 <!-- Barra lateral mejorada con ARIA -->
 <nav class="sidebar" aria-label="Menú principal">
     <div class="sidebar_header">
-        <img src="<?php echo image_url('LogoDBACK.png'); ?>" class="sidebar_icon sidebar_icon--logo" alt="Logo DBACK" width="30" height="30">
+        <img src="Elementos/LogoDBACK.png" class="sidebar_icon sidebar_icon--logo" alt="Logo DBACK" width="30" height="30">
         <span class="sidebar_text">Grúas DBACK</span>
     </div>
 
@@ -33,35 +28,35 @@ $usuario_tipo = isset($_SESSION['usuario_tipo']) ? $_SESSION['usuario_tipo'] : '
         </li>
         
         <li class="sidebar_element" role="menuitem" onclick="showSection('gruas')" tabindex="0" aria-label="Grúas">
-            <a href="<?php echo admin_url('Gruas.php'); ?>" class="sidebar_link">
+            <a href="Gruas.php" class="sidebar_link">
                 <i class="fas fa-truck sidebar_icon" aria-hidden="true"></i>
                 <span class="sidebar_text">Grúas</span>
             </a>
         </li>
         
         <li class="sidebar_element" role="menuitem" onclick="showSection('gastos')" tabindex="0" aria-label="Gastos">
-            <a href="<?php echo admin_url('Gastos.php'); ?>" class="sidebar_link">
+            <a href="Gastos.php" class="sidebar_link">
                 <i class="fas fa-money-bill-wave sidebar_icon" aria-hidden="true"></i>
                 <span class="sidebar_text">Gastos</span>
             </a>
         </li>
         
         <li class="sidebar_element" role="menuitem" onclick="showSection('empleados')" tabindex="0" aria-label="Empleados">
-            <a href="<?php echo admin_url('Empleados.php'); ?>" class="sidebar_link">
+            <a href="Empleados.php" class="sidebar_link">
                 <i class="fas fa-users sidebar_icon" aria-hidden="true"></i>
                 <span class="sidebar_text">Empleados</span>
             </a>
         </li>
 
         <li class="sidebar_element" role="menuitem" onclick="showSection('panel-solicitud')" tabindex="0" aria-label="Panel de solicitud">
-            <a href="<?php echo module_url('solicitudes', 'procesar-solicitud.php'); ?>" class="sidebar_link">
+            <a href="procesar-solicitud.php" class="sidebar_link">
                 <i class="fas fa-clipboard-list sidebar_icon" aria-hidden="true"></i>
                 <span class="sidebar_text">Panel de solicitud</span>
             </a>
         </li>
         
         <li class="sidebar_element" role="menuitem" onclick="showSection('auto-asignacion')" tabindex="0" aria-label="Auto-asignación">
-            <a href="<?php echo admin_url('menu-auto-asignacion.php'); ?>" class="sidebar_link">
+            <a href="menu-auto-asignacion.php" class="sidebar_link">
                 <i class="fas fa-robot sidebar_icon" aria-hidden="true"></i>
                 <span class="sidebar_text">Auto-Asignación</span>
             </a>
@@ -69,7 +64,7 @@ $usuario_tipo = isset($_SESSION['usuario_tipo']) ? $_SESSION['usuario_tipo'] : '
 
         <?php if ($usuario_tipo === 'admin'): ?>
         <li class="sidebar_element" role="menuitem" onclick="showSection('configuracion')" tabindex="0" aria-label="Configuración">
-            <a href="<?php echo admin_url('configuracion-auto-asignacion.php'); ?>" class="sidebar_link">
+            <a href="configuracion-auto-asignacion.php" class="sidebar_link">
                 <i class="fas fa-cog sidebar_icon" aria-hidden="true"></i>
                 <span class="sidebar_text">Configuración</span>
             </a>
@@ -77,14 +72,14 @@ $usuario_tipo = isset($_SESSION['usuario_tipo']) ? $_SESSION['usuario_tipo'] : '
         <?php endif; ?>
 
         <li class="sidebar_element" role="menuitem" onclick="showSection('reportes')" tabindex="0" aria-label="Reportes">
-            <a href="<?php echo admin_url('Reportes.php'); ?>" class="sidebar_link">
+            <a href="Reportes.php" class="sidebar_link">
                 <i class="fas fa-chart-bar sidebar_icon" aria-hidden="true"></i>
                 <span class="sidebar_text">Reportes</span>
             </a>
         </li>
 
         <li class="sidebar_element" role="menuitem" onclick="showSection('solicitud')" tabindex="0" aria-label="Nueva solicitud">
-            <a href="<?php echo module_url('solicitudes', 'solicitud.php'); ?>" class="sidebar_link">
+            <a href="solicitud.php" class="sidebar_link">
                 <i class="fas fa-plus-circle sidebar_icon" aria-hidden="true"></i>
                 <span class="sidebar_text">Nueva Solicitud</span>
             </a>
@@ -101,7 +96,7 @@ $usuario_tipo = isset($_SESSION['usuario_tipo']) ? $_SESSION['usuario_tipo'] : '
         </div>
         
         <div class="sidebar_element" role="menuitem">
-            <a href="<?php echo BASE_URL; ?>/cerrar_sesion.php" class="sidebar_link" aria-label="Cerrar sesión">
+            <a href="cerrar_sesion.php" class="sidebar_link" aria-label="Cerrar sesión">
                 <i class="fas fa-sign-out-alt sidebar_icon" aria-hidden="true"></i>
                 <span class="sidebar_text">Cerrar Sesión</span>
             </a>
