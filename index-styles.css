@@ -1,4 +1,5 @@
 /* Estilos específicos para la página web pública de Grúas DBACK */
+@import url('./CSS/variables.css');
 
 * {
     margin: 0;
@@ -7,21 +8,21 @@
 }
 
 body {
-    font-family: 'Montserrat', 'Roboto', Arial, sans-serif;
+    font-family: var(--font-family-primary);
     line-height: 1.6;
-    color: #333;
-    background-color: #f8f9fa;
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
 }
 
 /* Barra de navegación */
 .navbar {
-    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    background: var(--bg-gradient-primary);
     padding: 1rem 0;
     position: fixed;
     top: 0;
     width: 100%;
-    z-index: 1000;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: var(--z-fixed);
+    box-shadow: var(--shadow-lg);
 }
 
 .nav-content {
@@ -63,42 +64,42 @@ body {
 }
 
 .nav-link:hover {
-    color: #5a7ba7;
+    color: var(--primary-light);
 }
 
 /* Botones */
 .btn-3d {
-    background: linear-gradient(135deg, #5a7ba7 0%, #4a6b9a 100%);
-    color: white;
+    background: var(--bg-gradient-primary);
+    color: var(--text-white);
     padding: 12px 24px;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--border-radius-md);
     text-decoration: none;
     font-weight: 600;
     display: inline-block;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(90, 123, 167, 0.3);
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-primary);
 }
 
 .btn-3d:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(90, 123, 167, 0.4);
-    color: white;
+    box-shadow: var(--shadow-primary-hover);
+    color: var(--text-white);
 }
 
 .btn-3d-primary {
-    background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
-    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+    background: linear-gradient(135deg, var(--success-color) 0%, var(--success-dark) 100%);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
 }
 
 .btn-3d-primary:hover {
-    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
 }
 
 /* Sección Hero */
 .hero {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: var(--bg-gradient-secondary);
+    color: var(--text-white);
     padding: 120px 0 80px;
     text-align: center;
     position: relative;
@@ -154,7 +155,7 @@ body {
     text-align: center;
     font-size: 2.5rem;
     margin-bottom: 3rem;
-    color: #2c3e50;
+    color: var(--text-primary);
 }
 
 .services-grid {
@@ -167,41 +168,41 @@ body {
 }
 
 .service-card {
-    background: white;
+    background: var(--bg-primary);
     padding: 2rem;
-    border-radius: 15px;
+    border-radius: var(--border-radius-lg);
     text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
-    border: 1px solid #e9ecef;
+    box-shadow: var(--shadow-lg);
+    transition: all var(--transition-base);
+    border: 1px solid var(--border-color-light);
 }
 
 .service-card:hover {
     transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    box-shadow: var(--shadow-xl);
 }
 
 .service-card i {
     font-size: 3rem;
-    color: #3498db;
+    color: var(--primary-color);
     margin-bottom: 1rem;
 }
 
 .service-card h3 {
     font-size: 1.5rem;
     margin-bottom: 1rem;
-    color: #2c3e50;
+    color: var(--text-primary);
 }
 
 .service-card p {
-    color: #666;
+    color: var(--text-secondary);
     margin-bottom: 1.5rem;
 }
 
 /* Sección About */
 .about {
     padding: 80px 0;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
 }
 
 .feature-card {
@@ -214,13 +215,13 @@ body {
 .feature-card h2 {
     font-size: 2.5rem;
     margin-bottom: 2rem;
-    color: #2c3e50;
+    color: var(--text-primary);
 }
 
 .feature-card p {
     font-size: 1.2rem;
     line-height: 1.8;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 /* Sección Features */
@@ -254,25 +255,25 @@ body {
 
 .features .feature-card i {
     font-size: 3rem;
-    color: #e74c3c;
+    color: var(--danger-color);
     margin-bottom: 1rem;
 }
 
 .features .feature-card h3 {
     font-size: 1.5rem;
     margin-bottom: 1rem;
-    color: #2c3e50;
+    color: var(--text-primary);
 }
 
 .features .feature-card p {
-    color: #666;
+    color: var(--text-secondary);
     line-height: 1.6;
 }
 
 /* Sección Ubicación */
 .location {
     padding: 80px 0;
-    background: #f8f9fa;
+    background: var(--bg-secondary);
 }
 
 .location-content {
@@ -285,20 +286,20 @@ body {
     text-align: center;
     font-size: 2.5rem;
     margin-bottom: 3rem;
-    color: #2c3e50;
+    color: var(--text-primary);
 }
 
 .map-container {
-    border-radius: 15px;
+    border-radius: var(--border-radius-lg);
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-lg);
 }
 
 /* Sección Contacto */
 .contact {
     padding: 80px 0;
-    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-    color: white;
+    background: var(--bg-gradient-primary);
+    color: var(--text-white);
     text-align: center;
 }
 
@@ -323,21 +324,21 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 1rem;
-    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--danger-color) 0%, var(--danger-dark) 100%);
+    color: var(--text-white);
     padding: 20px 40px;
-    border-radius: 50px;
+    border-radius: var(--border-radius-full);
     text-decoration: none;
     font-size: 1.5rem;
     font-weight: 700;
-    transition: all 0.3s ease;
-    box-shadow: 0 10px 30px rgba(231, 76, 60, 0.3);
+    transition: all var(--transition-base);
+    box-shadow: 0 10px 30px rgba(220, 53, 69, 0.3);
 }
 
 .emergency-phone:hover {
     transform: translateY(-3px);
-    box-shadow: 0 15px 40px rgba(231, 76, 60, 0.4);
-    color: white;
+    box-shadow: 0 15px 40px rgba(220, 53, 69, 0.4);
+    color: var(--text-white);
 }
 
 .emergency-phone i {
@@ -346,8 +347,8 @@ body {
 
 /* Footer */
 footer {
-    background: #1a252f;
-    color: white;
+    background: var(--text-dark);
+    color: var(--text-white);
     padding: 3rem 0 2rem;
     text-align: center;
 }
@@ -380,16 +381,16 @@ footer {
     justify-content: center;
     width: 50px;
     height: 50px;
-    background: #3498db;
-    color: white;
-    border-radius: 50%;
+    background: var(--primary-color);
+    color: var(--text-white);
+    border-radius: var(--border-radius-full);
     text-decoration: none;
     font-size: 1.5rem;
-    transition: all 0.3s ease;
+    transition: all var(--transition-base);
 }
 
 .social-links a:hover {
-    background: #2980b9;
+    background: var(--primary-dark);
     transform: translateY(-3px);
 }
 
@@ -398,7 +399,7 @@ footer {
 }
 
 .footer-links a {
-    color: #3498db;
+    color: var(--primary-color);
     text-decoration: none;
     margin: 0 1rem;
 }

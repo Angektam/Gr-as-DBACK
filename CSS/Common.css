@@ -4,49 +4,8 @@
    Diseño Corporativo y Moderno
    =================================== */
 
-/* ========== VARIABLES CSS GLOBALES ========== */
-:root {
-    /* Colores Principales */
-    --primary-color: #4361ee;
-    --primary-dark: #3730a3;
-    --primary-light: #6366f1;
-    
-    /* Colores de Acento */
-    --success-color: #10b981;
-    --success-dark: #059669;
-    --warning-color: #f59e0b;
-    --warning-dark: #d97706;
-    --danger-color: #ef4444;
-    --danger-dark: #dc2626;
-    
-    /* Colores Neutros */
-    --gray-50: #f9fafb;
-    --gray-100: #f3f4f6;
-    --gray-200: #e5e7eb;
-    --gray-300: #d1d5db;
-    --gray-600: #4b5563;
-    --gray-700: #374151;
-    --gray-800: #1f2937;
-    --gray-900: #111827;
-    
-    /* Sombras Profesionales */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    
-    /* Transiciones */
-    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
-    
-    /* Bordes */
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 20px;
-}
+/* Importar variables globales */
+@import url('variables.css');
 
 /* ========== RESET Y ESTILOS GLOBALES ========== */
 * {
@@ -56,11 +15,11 @@
 }
 
 body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    background: var(--bg-gradient-hero);
     background-attachment: fixed;
     min-height: 100vh;
-    font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-    color: var(--gray-900);
+    font-family: var(--font-family-primary);
+    color: var(--text-primary);
     line-height: 1.6;
 }
 
@@ -71,14 +30,14 @@ body {
     padding: 0;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
-    border-radius: var(--radius-xl);
+    border-radius: var(--border-radius-xl);
     box-shadow: var(--shadow-2xl);
     overflow: hidden;
 }
 
 /* ========== HEADER SECTION ========== */
 .header-section {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    background: var(--bg-gradient-primary);
     padding: 40px 40px 30px;
     position: relative;
     overflow: hidden;
@@ -124,8 +83,8 @@ body {
 }
 
 .stat-card {
-    background: white;
-    border-radius: var(--radius-lg);
+    background: var(--bg-primary);
+    border-radius: var(--border-radius-lg);
     padding: 28px;
     position: relative;
     overflow: hidden;
@@ -171,7 +130,7 @@ body {
 .stat-card .number {
     font-size: 2.75rem;
     font-weight: 800;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    background: var(--bg-gradient-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -356,43 +315,43 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-    color: white;
+    background: var(--bg-gradient-primary);
+    color: var(--text-white);
 }
 
 .btn-primary:hover {
     background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
-    color: white;
+    color: var(--text-white);
 }
 
 .btn-success {
     background: linear-gradient(135deg, var(--success-color), var(--success-dark));
-    color: white;
+    color: var(--text-white);
 }
 
 .btn-success:hover {
     background: linear-gradient(135deg, var(--success-dark), var(--success-color));
-    color: white;
+    color: var(--text-white);
 }
 
 .btn-warning {
     background: linear-gradient(135deg, var(--warning-color), var(--warning-dark));
-    color: white;
+    color: var(--text-white);
 }
 
 .btn-warning:hover {
     background: linear-gradient(135deg, var(--warning-dark), var(--warning-color));
-    color: white;
+    color: var(--text-white);
 }
 
 .btn-danger {
     background: linear-gradient(135deg, var(--danger-color), var(--danger-dark));
-    color: white;
+    color: var(--text-white);
 }
 
 .btn-danger:hover {
     background: linear-gradient(135deg, var(--danger-dark), var(--danger-color));
-    color: white;
+    color: var(--text-white);
 }
 
 .btn-sm {
@@ -409,8 +368,8 @@ body {
 }
 
 .modal-header {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-    color: white;
+    background: var(--bg-gradient-primary);
+    color: var(--text-white);
     border: none;
     padding: 25px 30px;
 }
@@ -458,7 +417,7 @@ body {
 
 .form-control:focus, .form-select:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+    box-shadow: 0 0 0 4px rgba(106, 13, 173, 0.1);
     outline: none;
 }
 
@@ -478,7 +437,7 @@ body {
 }
 
 .page-link {
-    border-radius: var(--radius-sm);
+    border-radius: var(--border-radius-sm);
     margin: 0;
     padding: 10px 16px;
     color: var(--gray-700);

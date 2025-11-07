@@ -1,18 +1,20 @@
 /* Estilos para validaciones */
+@import url('../CSS/variables.css');
+
 .campo-error {
-    border: 2px solid #dc3545 !important;
-    background-color: #fff5f5 !important;
+    border: 2px solid var(--danger-color) !important;
+    background-color: var(--danger-light) !important;
 }
 
 .campo-valido {
-    border: 2px solid #28a745 !important;
-    background-color: #f0fff4 !important;
+    border: 2px solid var(--success-color) !important;
+    background-color: var(--success-light) !important;
 }
 
 .error-message {
-    color: #dc3545;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
+    color: var(--danger-color);
+    font-size: var(--font-size-sm);
+    margin-top: var(--spacing-xs);
     display: block;
 }
 
@@ -21,9 +23,9 @@
 }
 
 .success-message {
-    color: #28a745;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
+    color: var(--success-color);
+    font-size: var(--font-size-sm);
+    margin-top: var(--spacing-xs);
     display: block;
 }
 
@@ -33,20 +35,20 @@
 }
 
 .mensaje-error-general {
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
+    background-color: var(--danger-light);
+    border: 1px solid var(--danger-color);
     color: #721c24;
-    padding: 1rem;
-    border-radius: 0.25rem;
-    margin-bottom: 1rem;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-md);
 }
 
 .mensaje-exito-general {
-    background-color: #d4edda;
-    border: 1px solid #c3e6cb;
+    background-color: var(--success-light);
+    border: 1px solid var(--success-color);
     color: #155724;
-    padding: 1rem;
-    border-radius: 0.25rem;
-    margin-bottom: 1rem;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-md);
 }
 
