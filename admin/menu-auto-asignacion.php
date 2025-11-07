@@ -6,6 +6,11 @@ $additional_css = ['../CSS/AutoAsignacion.css'];
 require_once '../conexion.php';
 require_once 'AutoAsignacionGruas.php';
 
+// Iniciar sesión si no está iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // VALIDACIÓN 1: Verificar sesión activa
 if (!isset($_SESSION['usuario_id'])) {
     header("Location: ../Login.php");

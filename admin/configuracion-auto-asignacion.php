@@ -1,7 +1,11 @@
 <?php
 require_once '../conexion.php';
 require_once 'AutoAsignacionGruas.php';
-// La sesión ya se inicia en config.php
+
+// Iniciar sesión si no está iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Verificar sesión y permisos de administrador
 if (!isset($_SESSION['usuario_id'])) {
