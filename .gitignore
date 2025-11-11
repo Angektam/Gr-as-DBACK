@@ -4,6 +4,7 @@ config-production.php
 
 # Archivos de base de datos
 *.sql
+!database/DBACKBD.sql
 *.db
 *.sqlite
 
