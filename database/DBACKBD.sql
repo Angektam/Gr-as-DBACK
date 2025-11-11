@@ -682,6 +682,14 @@ ALTER TABLE `usuarios`
   ADD COLUMN `activo` tinyint(1) NOT NULL DEFAULT '1';
 
 --
+-- Compat: agregar columnas de ubicación en gruas usadas por reportes y paneles
+--
+ALTER TABLE `gruas`
+  ADD COLUMN `ubicacion_actual` varchar(200) DEFAULT NULL,
+  ADD COLUMN `coordenadas_actuales` varchar(50) DEFAULT NULL,
+  ADD COLUMN `ultima_actualizacion_ubicacion` datetime DEFAULT NULL;
+
+--
 -- Dumping routines for database 'dback'
 --
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
