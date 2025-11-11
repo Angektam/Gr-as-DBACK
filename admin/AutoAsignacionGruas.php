@@ -7,6 +7,7 @@
 class AutoAsignacionGruas {
     private $conn;
     private $configuracion;
+    private $columnCache = [];
     
     public function __construct($conexion) {
         $this->conn = $conexion;
@@ -24,6 +25,99 @@ class AutoAsignacionGruas {
         while ($row = $result->fetch_assoc()) {
             $this->configuracion[$row['parametro']] = $row['valor'];
         }
+    }
+    
+    /**
+     * Obtener columnas disponibles de una tabla y mantenerlas en caché
+     */
+    private function obtenerColumnasTabla($tabla) {
+        if (isset($this->columnCache[$tabla])) {
+            return $this->columnCache[$tabla];
+        }
+        
+        $tablasPermitidas = [
+            'configuracion_auto_asignacion',
+            'historial_asignaciones',
+            'solicitudes',
+            'gruas',
+            'equipos_ayuda',
+            'notificaciones_usuarios',
+            'eventos_sistema'
+        ];
+        
+        if (!in_array($tabla, $tablasPermitidas, true)) {
+            $this->log("Intento de acceso a tabla no permitida: $tabla", 'WARNING');
+            $this->columnCache[$tabla] = [];
+            return $this->columnCache[$tabla];
+        }
+        
+        $columnas = [];
+        try {
+            $tablaSeguro = preg_replace('/[^a-zA-Z0-9_]/', '', $tabla);
+            if ($tablaSeguro !== $tabla) {
+                throw new Exception("Nombre de tabla inválido: $tabla");
+            }
+            
+            $resultado = $this->conn->query("SHOW COLUMNS FROM $tabla");
+            if ($resultado) {
+                while ($fila = $resultado->fetch_assoc()) {
+                    $columnas[] = $fila['Field'];
+                }
+            }
+        } catch (Exception $e) {
+            $this->log("Error al obtener columnas de $tabla: " . $e->getMessage(), 'ERROR');
+        }
+        
+        $this->columnCache[$tabla] = $columnas;
+        return $columnas;
+    }
+    
+    /**
+     * Verificar si una columna existe en la tabla indicada
+     */
+    private function columnaExiste($tabla, $columna) {
+        $columnas = $this->obtenerColumnasTabla($tabla);
+        return in_array($columna, $columnas, true);
+    }
+    
+    /**
+     * Obtener lista de columnas disponibles para una tabla permitida
+     */
+    public function obtenerColumnasDisponibles($tabla) {
+        return $this->obtenerColumnasTabla($tabla);
+    }
+    
+    /**
+     * Obtener el primer nombre de columna de fecha disponible según preferencias
+     */
+    public function obtenerColumnaFechaDisponible($tabla, $preferencias = []) {
+        $columnas = $this->obtenerColumnasTabla($tabla);
+        if (empty($columnas)) {
+            return null;
+        }
+        
+        if (empty($preferencias)) {
+            $preferencias = [
+                'historial_asignaciones' => ['fecha_asignacion', 'fecha_registro', 'fecha', 'creada_en', 'created_at'],
+                'solicitudes' => ['fecha_asignacion', 'fecha_servicio', 'fecha_solicitud', 'fecha', 'creada_en', 'created_at'],
+                'gruas' => ['fecha_actualizacion', 'ultima_actualizacion', 'fecha', 'creada_en'],
+                'equipos_ayuda' => ['fecha_actualizacion', 'fecha', 'creada_en']
+            ][$tabla] ?? ['fecha_asignacion', 'fecha', 'creada_en', 'created_at'];
+        }
+        
+        foreach ($preferencias as $col) {
+            if (in_array($col, $columnas, true)) {
+                return $col;
+            }
+        }
+        
+        foreach ($columnas as $col) {
+            if (stripos($col, 'fecha') !== false || stripos($col, 'date') !== false) {
+                return $col;
+            }
+        }
+        
+        return null;
     }
     
     /**
@@ -449,13 +543,119 @@ class AutoAsignacionGruas {
      * Registrar asignación en el historial
      */
     private function registrarHistorial($solicitud_id, $grua_id, $metodo, $criterios, $distancia, $tiempo_asignacion) {
-        $query = "INSERT INTO historial_asignaciones 
-                  (solicitud_id, grua_id, metodo_asignacion, criterios_usados, distancia_km, tiempo_asignacion_segundos, usuario_asignador) 
-                  VALUES (?, ?, ?, ?, ?, ?, 'Sistema')";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("iissdi", $solicitud_id, $grua_id, $metodo, $criterios, $distancia, $tiempo_asignacion);
-        $stmt->execute();
+        try {
+            $columnasDisponibles = $this->obtenerColumnasTabla('historial_asignaciones');
+            if (empty($columnasDisponibles)) {
+                $this->log('No se pudieron obtener columnas de historial_asignaciones. Registro omitido.', 'WARNING');
+                return;
+            }
+            
+            $columnas = [];
+            $placeholders = [];
+            $valores = [];
+            $tipos = '';
+            
+            // Siempre registrar ID de solicitud
+            $columnas[] = 'solicitud_id';
+            $placeholders[] = '?';
+            $valores[] = (int)$solicitud_id;
+            $tipos .= 'i';
+            
+            // Columna grua_id (si aplica)
+            if (in_array('grua_id', $columnasDisponibles, true)) {
+                $columnas[] = 'grua_id';
+                if ($grua_id !== null) {
+                    $placeholders[] = '?';
+                    $valores[] = (int)$grua_id;
+                    $tipos .= 'i';
+                } else {
+                    $placeholders[] = 'NULL';
+                }
+            }
+            
+            // Metodo de asignación
+            $metodo = $metodo ?: 'automatica';
+            if (in_array('metodo_asignacion', $columnasDisponibles, true)) {
+                $columnas[] = 'metodo_asignacion';
+                $placeholders[] = '?';
+                $valores[] = $metodo;
+                $tipos .= 's';
+            }
+            
+            // Criterios usados
+            if (in_array('criterios_usados', $columnasDisponibles, true)) {
+                $columnas[] = 'criterios_usados';
+                $placeholders[] = '?';
+                $valores[] = $criterios ?? '';
+                $tipos .= 's';
+            }
+            
+            // Distancia en km
+            if (in_array('distancia_km', $columnasDisponibles, true)) {
+                $columnas[] = 'distancia_km';
+                if ($distancia !== null) {
+                    $placeholders[] = '?';
+                    $valores[] = (float)$distancia;
+                    $tipos .= 'd';
+                } else {
+                    $placeholders[] = 'NULL';
+                }
+            }
+            
+            // Tiempo de asignación (valor numérico tal como se calcule)
+            if (in_array('tiempo_asignacion_segundos', $columnasDisponibles, true)) {
+                $columnas[] = 'tiempo_asignacion_segundos';
+                if ($tiempo_asignacion !== null) {
+                    $placeholders[] = '?';
+                    $valores[] = round((float)$tiempo_asignacion, 3);
+                    $tipos .= 'd';
+                } else {
+                    $placeholders[] = 'NULL';
+                }
+            }
+            
+            // Usuario asignador / usuario_id
+            if (in_array('usuario_asignador', $columnasDisponibles, true)) {
+                $columnas[] = 'usuario_asignador';
+                $placeholders[] = '?';
+                $valores[] = 'Sistema';
+                $tipos .= 's';
+            } elseif (in_array('usuario_id', $columnasDisponibles, true)) {
+                $columnas[] = 'usuario_id';
+                $placeholders[] = 'NULL';
+            }
+            
+            // Fecha de asignación
+            if (in_array('fecha_asignacion', $columnasDisponibles, true)) {
+                $columnas[] = 'fecha_asignacion';
+                $placeholders[] = 'NOW()';
+            }
+            
+            // Equipo de ayuda (solo si no se proporcionó grúa)
+            if (in_array('equipo_asignado_id', $columnasDisponibles, true) && $grua_id === null) {
+                $columnas[] = 'equipo_asignado_id';
+                $placeholders[] = 'NULL';
+            }
+            
+            $query = "INSERT INTO historial_asignaciones (" . implode(', ', $columnas) . ") VALUES (" . implode(', ', $placeholders) . ")";
+            $stmt = $this->conn->prepare($query);
+            
+            if (!$stmt) {
+                throw new Exception("No se pudo preparar el registro de historial: " . $this->conn->error);
+            }
+            
+            if ($tipos !== '') {
+                $refs = [];
+                foreach ($valores as $idx => $valor) {
+                    $refs[$idx] = &$valores[$idx];
+                }
+                $stmt->bind_param($tipos, ...$refs);
+            }
+            
+            $stmt->execute();
+        } catch (Exception $e) {
+            $this->log("Error al registrar historial: " . $e->getMessage(), 'ERROR');
+        }
     }
     
     /**
@@ -482,32 +682,113 @@ class AutoAsignacionGruas {
      * Obtener estadísticas de auto-asignación
      */
     public function obtenerEstadisticas($fecha_inicio = null, $fecha_fin = null) {
+        $columnas = $this->obtenerColumnasTabla('historial_asignaciones');
+        $default = [
+            'total_asignaciones' => 0,
+            'asignaciones_automaticas' => 0,
+            'asignaciones_manuales' => 0,
+            'tiempo_promedio_segundos' => null,
+            'distancia_promedio_km' => null
+        ];
+        
+        if (empty($columnas)) {
+            return $default;
+        }
+        
+        $campos = ["COUNT(*) as total_asignaciones"];
+        
+        if (in_array('metodo_asignacion', $columnas, true)) {
+            $campos[] = "SUM(CASE WHEN ha.metodo_asignacion = 'automatica' THEN 1 ELSE 0 END) as asignaciones_automaticas";
+            $campos[] = "SUM(CASE WHEN ha.metodo_asignacion = 'manual' THEN 1 ELSE 0 END) as asignaciones_manuales";
+        } else {
+            $campos[] = "COUNT(*) as asignaciones_automaticas";
+            $campos[] = "0 as asignaciones_manuales";
+        }
+        
+        if (in_array('tiempo_asignacion_segundos', $columnas, true)) {
+            $campos[] = "AVG(ha.tiempo_asignacion_segundos) as tiempo_promedio_segundos";
+        } else {
+            $campos[] = "NULL as tiempo_promedio_segundos";
+        }
+        
+        if (in_array('distancia_km', $columnas, true)) {
+            $campos[] = "AVG(ha.distancia_km) as distancia_promedio_km";
+        } else {
+            $campos[] = "NULL as distancia_promedio_km";
+        }
+        
         $where_clause = "";
         $params = [];
         $types = "";
         
-        if ($fecha_inicio && $fecha_fin) {
+        if ($fecha_inicio && $fecha_fin && $this->columnaExiste('historial_asignaciones', 'fecha_asignacion')) {
             $where_clause = "WHERE ha.fecha_asignacion BETWEEN ? AND ?";
             $params = [$fecha_inicio, $fecha_fin];
             $types = "ss";
         }
         
-        $query = "SELECT 
-                    COUNT(*) as total_asignaciones,
-                    SUM(CASE WHEN ha.metodo_asignacion = 'automatica' THEN 1 ELSE 0 END) as asignaciones_automaticas,
-                    SUM(CASE WHEN ha.metodo_asignacion = 'manual' THEN 1 ELSE 0 END) as asignaciones_manuales,
-                    AVG(ha.tiempo_asignacion_segundos) as tiempo_promedio_segundos,
-                    AVG(ha.distancia_km) as distancia_promedio_km
-                  FROM historial_asignaciones ha $where_clause";
-        
+        $query = "SELECT " . implode(', ', $campos) . " FROM historial_asignaciones ha $where_clause";
         $stmt = $this->conn->prepare($query);
-        if ($types) {
-            $stmt->bind_param($types, ...$params);
-        }
-        $stmt->execute();
-        $result = $stmt->get_result();
         
-        return $result->fetch_assoc();
+        if (!$stmt) {
+            $this->log("Error al preparar estadísticas de historial: " . $this->conn->error, 'ERROR');
+            return $default;
+        }
+        
+        if ($types) {
+            $refs = [];
+            foreach ($params as $idx => $valor) {
+                $refs[$idx] = &$params[$idx];
+            }
+            $stmt->bind_param($types, ...$refs);
+        }
+        
+        if (!$stmt->execute()) {
+            $this->log("Error al ejecutar estadísticas de historial: " . $stmt->error, 'ERROR');
+            return $default;
+        }
+        
+        $result = $stmt->get_result();
+        $estadisticas = $result ? $result->fetch_assoc() : false;
+        
+        if (!$estadisticas) {
+            return $default;
+        }
+        
+        return array_merge($default, $estadisticas);
+    }
+    
+    /**
+     * Obtener conteo de asignaciones (automáticas y manuales) de los últimos N días
+     */
+    public function obtenerAsignacionesUltimosDias($dias = 7) {
+        $dias = max(1, (int)$dias);
+        $fechas = [];
+        
+        for ($i = $dias - 1; $i >= 0; $i--) {
+            $fechas[] = date('Y-m-d', strtotime("-$i days"));
+        }
+        
+        $datasetHistorial = $this->calcularDatasetPorTabla('historial_asignaciones', $fechas);
+        $totalHistorial = array_sum($datasetHistorial['automaticas']) + array_sum($datasetHistorial['manuales']);
+        
+        if ($totalHistorial > 0) {
+            $datasetHistorial['fuente'] = 'historial_asignaciones';
+            return $datasetHistorial;
+        }
+        
+        $datasetSolicitudes = $this->calcularDatasetPorTabla('solicitudes', $fechas);
+        $totalSolicitudes = array_sum($datasetSolicitudes['automaticas']) + array_sum($datasetSolicitudes['manuales']);
+        
+        if ($totalSolicitudes > 0) {
+            $datasetSolicitudes['fuente'] = 'solicitudes';
+            return $datasetSolicitudes;
+        }
+        
+        $datasetTotales = $this->calcularDatasetPorTabla('solicitudes', $fechas, false);
+        $datasetTotales['fuente'] = 'solicitudes';
+        
+        return $datasetTotales;
     }
     
     /**
@@ -914,5 +1195,91 @@ class AutoAsignacionGruas {
      */
     private function log($mensaje, $nivel = 'INFO') {
         error_log("[$nivel] [AutoAsignacion] $mensaje");
+    }
+    
+    /**
+     * Contar asignaciones por día y método en una tabla específica
+     */
+    private function contarAsignacionesPorDia($tabla, $fecha, $metodo = null) {
+        $tablasPermitidas = ['historial_asignaciones', 'solicitudes'];
+        if (!in_array($tabla, $tablasPermitidas, true)) {
+            return 0;
+        }
+        
+        $preferencias = $tabla === 'solicitudes'
+            ? ['fecha_asignacion', 'fecha_servicio', 'fecha_solicitud', 'fecha', 'creada_en', 'created_at']
+            : ['fecha_asignacion', 'fecha_registro', 'fecha', 'creada_en', 'created_at'];
+        $columnaFecha = $this->obtenerColumnaFechaDisponible($tabla, $preferencias);
+        
+        if (!$columnaFecha) {
+            return 0;
+        }
+        
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $columnaFecha)) {
+            return 0;
+        }
+        
+        $fechaSeguro = $this->conn->real_escape_string($fecha);
+        $query = "SELECT COUNT(*) as total FROM $tabla WHERE DATE($columnaFecha) = '$fechaSeguro'";
+        
+        if ($metodo !== null) {
+            if (!$this->columnaExiste($tabla, 'metodo_asignacion') || !preg_match('/^[a-zA-Z0-9_]+$/', 'metodo_asignacion')) {
+                return 0;
+            }
+            $metodoSeguro = $this->conn->real_escape_string($metodo);
+            $query .= " AND metodo_asignacion = '$metodoSeguro'";
+        }
+        
+        $resultado = $this->conn->query($query);
+        if (!$resultado) {
+            $this->log("Error al contar asignaciones en $tabla: " . $this->conn->error, 'ERROR');
+            return 0;
+        }
+        
+        $fila = $resultado->fetch_assoc();
+        return isset($fila['total']) ? (int)$fila['total'] : 0;
+    }
+    
+    /**
+     * Calcular dataset de asignaciones para gráfica
+     */
+    private function calcularDatasetPorTabla($tabla, $fechas, $usarMetodos = true) {
+        $automaticas = [];
+        $manuales = [];
+        
+        $preferencias = $tabla === 'solicitudes'
+            ? ['fecha_asignacion', 'fecha_servicio', 'fecha_solicitud', 'fecha', 'creada_en', 'created_at']
+            : ['fecha_asignacion', 'fecha_registro', 'fecha', 'creada_en', 'created_at'];
+        $columnaFecha = $this->obtenerColumnaFechaDisponible($tabla, $preferencias);
+        $columnaMetodoDisponible = $usarMetodos && $this->columnaExiste($tabla, 'metodo_asignacion');
+        
+        if (!$columnaFecha || !preg_match('/^[a-zA-Z0-9_]+$/', $columnaFecha)) {
+            foreach ($fechas as $_) {
+                $automaticas[] = 0;
+                $manuales[] = 0;
+            }
+            return [
+                'automaticas' => $automaticas,
+                'manuales' => $manuales,
+                'fechas' => $fechas
+            ];
+        }
+        
+        foreach ($fechas as $fecha) {
+            if ($columnaMetodoDisponible) {
+                $automaticas[] = $this->contarAsignacionesPorDia($tabla, $fecha, 'automatica');
+                $manuales[] = $this->contarAsignacionesPorDia($tabla, $fecha, 'manual');
+            } else {
+                $total = $this->contarAsignacionesPorDia($tabla, $fecha, null);
+                $automaticas[] = $total;
+                $manuales[] = 0;
+            }
+        }
+        
+        return [
+            'automaticas' => $automaticas,
+            'manuales' => $manuales,
+            'fechas' => $fechas
+        ];
     }
 }
