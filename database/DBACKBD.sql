@@ -428,6 +428,260 @@ DELIMITER ;
 --
 
 --
+-- Additional compatibility objects required by the PHP app
+-- (agregados para que no falte nada que el código usa)
+--
+
+-- Ampliar tabla gruas con campo de disponibilidad
+ALTER TABLE `gruas`
+  ADD COLUMN `disponible_desde` datetime DEFAULT NULL;
+
+--
+-- Table structure for table `configuracion_auto_asignacion`
+--
+DROP TABLE IF EXISTS `configuracion_auto_asignacion`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `configuracion_auto_asignacion` (
+  `parametro` varchar(100) NOT NULL,
+  `valor` varchar(255) DEFAULT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT '1',
+  `actualizado_en` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`parametro`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `gruas_disponibles`
+--
+DROP TABLE IF EXISTS `gruas_disponibles`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `gruas_disponibles` (
+  `ID` int NOT NULL,
+  `tiene_coordenadas` tinyint(1) NOT NULL DEFAULT '0',
+  `disponible_desde` datetime DEFAULT NULL,
+  PRIMARY KEY (`ID`),
+  CONSTRAINT `fk_gd_grua` FOREIGN KEY (`ID`) REFERENCES `gruas` (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `configuracion_tipos_servicio`
+--
+DROP TABLE IF EXISTS `configuracion_tipos_servicio`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `configuracion_tipos_servicio` (
+  `tipo_servicio` varchar(50) NOT NULL,
+  `tipo_grua_preferido` varchar(50) NOT NULL,
+  PRIMARY KEY (`tipo_servicio`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `historial_asignaciones`
+--
+DROP TABLE IF EXISTS `historial_asignaciones`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `historial_asignaciones` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `solicitud_id` int NOT NULL,
+  `grua_id` int DEFAULT NULL,
+  `equipo_asignado_id` int DEFAULT NULL,
+  `metodo_asignacion` varchar(20) DEFAULT NULL,
+  `fecha_asignacion` datetime DEFAULT CURRENT_TIMESTAMP,
+  `usuario_id` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `solicitud_id_idx` (`solicitud_id`),
+  KEY `grua_id_idx` (`grua_id`),
+  CONSTRAINT `fk_hist_asig_solicitud` FOREIGN KEY (`solicitud_id`) REFERENCES `solicitudes` (`id`),
+  CONSTRAINT `fk_hist_asig_grua` FOREIGN KEY (`grua_id`) REFERENCES `gruas` (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `notificaciones_usuarios`
+--
+DROP TABLE IF EXISTS `notificaciones_usuarios`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `notificaciones_usuarios` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `usuario_id` int NOT NULL,
+  `titulo` varchar(100) NOT NULL,
+  `mensaje` text,
+  `creada_en` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `usuario_id_idx` (`usuario_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `eventos_sistema`
+--
+DROP TABLE IF EXISTS `eventos_sistema`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `eventos_sistema` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `tipo` varchar(50) NOT NULL,
+  `descripcion` text,
+  `creada_en` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `suspension_servicio`
+--
+DROP TABLE IF EXISTS `suspension_servicio`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `suspension_servicio` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `razon` text,
+  `fecha_suspension` datetime DEFAULT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Ampliar tabla solicitudes con campos usados por módulos
+--
+ALTER TABLE `solicitudes`
+  ADD COLUMN `cliente_id` int DEFAULT NULL,
+  ADD COLUMN `fecha_servicio` datetime DEFAULT NULL,
+  ADD COLUMN `ubicacion_origen` text,
+  ADD COLUMN `ubicacion_destino` text,
+  ADD COLUMN `costo` decimal(10,2) DEFAULT NULL,
+  ADD COLUMN `descripcion` text,
+  ADD COLUMN `grua_asignada_id` int DEFAULT NULL,
+  ADD COLUMN `equipo_asignado_id` int DEFAULT NULL,
+  ADD COLUMN `metodo_asignacion` varchar(20) DEFAULT NULL,
+  ADD COLUMN `fecha_asignacion` datetime DEFAULT NULL,
+  ADD COLUMN `fecha_completado` datetime DEFAULT NULL,
+  ADD COLUMN `usuario_id` int DEFAULT NULL;
+
+--
+-- Table structure for table `equipos_ayuda`
+--
+DROP TABLE IF EXISTS `equipos_ayuda`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `equipos_ayuda` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `Tipo_Servicio` varchar(50) NOT NULL,
+  `Disponible` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Ampliar tabla empleados con campos de estado/departamento
+--
+ALTER TABLE `empleados`
+  ADD COLUMN `estado` enum('activo','inactivo') NOT NULL DEFAULT 'activo',
+  ADD COLUMN `fecha_baja` datetime DEFAULT NULL,
+  ADD COLUMN `departamento` varchar(100) DEFAULT NULL;
+
+--
+-- Table structure for table `historial_empleados`
+--
+DROP TABLE IF EXISTS `historial_empleados`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `historial_empleados` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `empleado_id` int NOT NULL,
+  `usuario_id` int DEFAULT NULL,
+  `accion` varchar(100) NOT NULL,
+  `fecha` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `empleado_id_idx` (`empleado_id`),
+  CONSTRAINT `fk_hist_emp` FOREIGN KEY (`empleado_id`) REFERENCES `empleados` (`ID_Empleado`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `clientes`
+--
+DROP TABLE IF EXISTS `clientes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `clientes` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(100) NOT NULL,
+  `telefono` varchar(20) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `solicitudes_servicio`
+--
+DROP TABLE IF EXISTS `solicitudes_servicio`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `solicitudes_servicio` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `nombre_cliente` varchar(100) NOT NULL,
+  `telefono` varchar(20) NOT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `ubicacion_origen` text NOT NULL,
+  `ubicacion_destino` text NOT NULL,
+  `tipo_vehiculo` varchar(50) NOT NULL,
+  `marca_vehiculo` varchar(50) NOT NULL,
+  `modelo_vehiculo` varchar(50) NOT NULL,
+  `foto_vehiculo` varchar(255) DEFAULT NULL,
+  `tipo_servicio` varchar(50) NOT NULL,
+  `descripcion_problema` text,
+  `nivel_urgencia` varchar(20) NOT NULL,
+  `distancia_estimada` decimal(10,2) DEFAULT NULL,
+  `costo_estimado` decimal(10,2) DEFAULT NULL,
+  `metodo_pago` varchar(20) DEFAULT NULL,
+  `deposito` decimal(10,2) DEFAULT NULL,
+  `pago_restante` decimal(10,2) DEFAULT NULL,
+  `paypal_order_id` varchar(50) DEFAULT NULL,
+  `paypal_status` varchar(20) DEFAULT NULL,
+  `paypal_email` varchar(100) DEFAULT NULL,
+  `paypal_name` varchar(100) DEFAULT NULL,
+  `fecha_solicitud` datetime DEFAULT CURRENT_TIMESTAMP,
+  `estado` varchar(20) NOT NULL DEFAULT 'pendiente',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `mantenimientos`
+--
+DROP TABLE IF EXISTS `mantenimientos`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `mantenimientos` (
+  `ID` int NOT NULL AUTO_INCREMENT,
+  `GruaID` int NOT NULL,
+  `Tipo` varchar(100) NOT NULL,
+  `Fecha` date NOT NULL,
+  `Tecnico` varchar(100) DEFAULT NULL,
+  `Costo` decimal(10,2) DEFAULT NULL,
+  `Detalles` text,
+  PRIMARY KEY (`ID`),
+  KEY `GruaID_idx` (`GruaID`),
+  CONSTRAINT `fk_mant_grua` FOREIGN KEY (`GruaID`) REFERENCES `gruas` (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Ampliar tabla usuarios con campos opcionales usados por reportes
+--
+ALTER TABLE `usuarios`
+  ADD COLUMN `cargo` varchar(50) DEFAULT NULL,
+  ADD COLUMN `activo` tinyint(1) NOT NULL DEFAULT '1';
+
+--
 -- Dumping routines for database 'dback'
 --
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
