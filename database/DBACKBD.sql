@@ -58,26 +58,21 @@ DROP TABLE IF EXISTS `empleados`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `empleados` (
   `ID_Empleado` int NOT NULL AUTO_INCREMENT,
-  `Nombres` varchar(100) NOT NULL,
   `Apellido1` varchar(50) NOT NULL,
-  `Apellido2` varchar(50) DEFAULT NULL,
+  `Apellido2` varchar(50) NOT NULL,
+  `Nombres` varchar(100) NOT NULL,
   `RFC` varchar(13) NOT NULL,
   `Nomina` bigint NOT NULL,
   `Fecha_Ingreso` date NOT NULL,
   `Puesto` varchar(100) NOT NULL,
-  `departamento` varchar(100) NOT NULL,
-  `Sueldo` decimal(10,2) NOT NULL,
-  `telefono` varchar(20) DEFAULT NULL,
+  `Sueldo` decimal(5,2) NOT NULL,
+  `telefono` bigint NOT NULL,
   `email` varchar(100) DEFAULT NULL,
-  `licencia` varchar(25) DEFAULT NULL,
-  `direccion` varchar(200) DEFAULT NULL,
-  `estado` enum('activo','inactivo') NOT NULL DEFAULT 'activo',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `licencia` varchar(20) DEFAULT NULL,
   PRIMARY KEY (`ID_Empleado`),
   UNIQUE KEY `RFC_UNIQUE` (`RFC`),
   UNIQUE KEY `Nomina_UNIQUE` (`Nomina`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -86,19 +81,7 @@ CREATE TABLE `empleados` (
 
 LOCK TABLES `empleados` WRITE;
 /*!40000 ALTER TABLE `empleados` DISABLE KEYS */;
-INSERT INTO `empleados` (`ID_Empleado`,`Nombres`,`Apellido1`,`Apellido2`,`RFC`,`Nomina`,`Fecha_Ingreso`,`Puesto`,`departamento`,`Sueldo`,`telefono`,`email`,`licencia`,`direccion`,`estado`) VALUES
-(1,'Kevin Ricardo','Lopez','Payan','LOPK800101ABC',100001,'2023-02-14','Ingeniero de Sistemas','Tecnología',18500.00,'6688253351','kevin.lopez@dback.com','LIC765432','Av. Álamos 120, Los Mochis, Sin.','activo'),
-(2,'Angel Gabriel','Flores','Guevara','FLOG900215MNB',100002,'2022-11-03','Analista de Datos','Tecnología',16200.00,'6688123476','angel.flores@dback.com','LIC554433','Calle Hidalgo 245, Los Mochis, Sin.','activo'),
-(3,'Mariana','Torres','Delgado','TODM870612PL1',100003,'2021-08-16','Coordinadora de Operaciones','Operaciones',14800.00,'6688098765','mariana.torres@dback.com','LIC102938','Blvd. Rosales 560, Los Mochis, Sin.','activo'),
-(4,'Luis Fernando','Sanchez','Ibarra','SAIL850927QW8',100004,'2019-05-10','Supervisor de Flota','Operaciones',17250.00,'6688345120','luis.sanchez@dback.com','LIC564738','Av. Independencia 88, Los Mochis, Sin.','activo'),
-(5,'Daniela','Gomez','Ruiz','GORD920304TX5',100005,'2020-01-22','Especialista RH','Recursos Humanos',13900.00,'6688450912','daniela.gomez@dback.com','LIC837465','C. Benito Juárez 410, Los Mochis, Sin.','activo'),
-(6,'Carlos Eduardo','Martinez','Leon','MALE930718ZR3',100006,'2018-07-02','Contador Senior','Finanzas',15800.00,'6688542034','carlos.martinez@dback.com','LIC293847','Av. Gabriel Leyva 920, Los Mochis, Sin.','activo'),
-(7,'Sofia','Hernandez','Campos','HECS950112JK7',100007,'2021-03-18','Ejecutiva Comercial','Ventas',13250.00,'6688675490','sofia.hernandez@dback.com','LIC485920','C. Ignacio Zaragoza 302, Los Mochis, Sin.','activo'),
-(8,'Jorge Alberto','Navarro','Vega','NAVJ880925LM4',100008,'2017-09-05','Jefe de Taller','Mantenimiento',16700.00,'6688723415','jorge.navarro@dback.com','LIC657483','Carretera México 15 Km 3, Los Mochis, Sin.','activo'),
-(9,'Paola Andrea','Rios','Luna','RILP940615SD2',100009,'2022-04-11','Coordinadora de Marketing','Marketing',12600.00,'6688901234','paola.rios@dback.com','LIC918273','Av. Constitución 150, Los Mochis, Sin.','activo'),
-(10,'Miguel Angel','Cardenas','Soto','CASM860730HU6',100010,'2016-12-01','Gerente de Operaciones','Operaciones',21500.00,'6688998765','miguel.cardenas@dback.com','LIC746291','Blvd. Centenario 230, Los Mochis, Sin.','activo'),
-(11,'Fernanda','Perez','Ortiz','PEOF970209BF1',100011,'2023-06-19','Asesora de Servicio','Atención al Cliente',11800.00,'6688789456','fernanda.perez@dback.com','LIC564738','C. Allende 67, Los Mochis, Sin.','activo'),
-(12,'Ricardo Emilio','Aguilar','Mora','AURR910521CN9',100012,'2015-03-23','Director General','Dirección',32000.00,'6688844321','ricardo.aguilar@dback.com','LIC120045','Av. Álvaro Obregón 800, Los Mochis, Sin.','activo');
+INSERT INTO `empleados` VALUES (1,'Lopez','Payan','Kevin Ricardo','e3d2f424e2r',1542144815151,'2025-02-24','Ing. en sistemas',550.00,6688253351,NULL,NULL),(2,'Flores','Guevara','Angel Gabriel','qfeqwbgfqd',5772553554241,'2025-02-24','sistemas',500.00,0,NULL,NULL);
 /*!40000 ALTER TABLE `empleados` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -110,10 +93,8 @@ UNLOCK TABLES;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `ActualizarFechaIngresoEmpleado` BEFORE INSERT ON `empleados` FOR EACH ROW BEGIN
-    IF NEW.Fecha_Ingreso IS NULL OR NEW.Fecha_Ingreso = '' THEN
-        SET NEW.Fecha_Ingreso = CURRENT_DATE();
-    END IF;
+/*!50003 CREATE*/ /*!50003 TRIGGER `ActualizarFechaIngresoEmpleado` BEFORE INSERT ON `empleados` FOR EACH ROW BEGIN
+    SET NEW.Fecha_Ingreso = CURRENT_DATE();
 END */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -129,7 +110,7 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `Bajarsueldo` BEFORE UPDATE ON `empleados` FOR EACH ROW BEGIN
+/*!50003 CREATE*/ /*!50003 TRIGGER `Bajarsueldo` BEFORE UPDATE ON `empleados` FOR EACH ROW BEGIN
     IF NEW.Sueldo < OLD.Sueldo THEN
         SIGNAL SQLSTATE '45000' 
         SET MESSAGE_TEXT = 'En México, reducir el sueldo de un empleado no es una práctica permitida según la Ley Federal del Trabajo.';
@@ -149,7 +130,7 @@ DROP TABLE IF EXISTS `gruas`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `gruas` (
-  `ID` int NOT NULL,
+  `ID` int NOT NULL AUTO_INCREMENT,
   `Placa` varchar(7) NOT NULL,
   `Marca` varchar(100) NOT NULL,
   `Modelo` varchar(100) NOT NULL,
@@ -401,7 +382,7 @@ DROP TABLE IF EXISTS `usuarios`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `usuarios` (
-  `ID_Usuario` int NOT NULL,
+  `ID_Usuario` int NOT NULL AUTO_INCREMENT,
   `ID_Empleado` int NOT NULL,
   `ROL` enum('Admin','Chofer','RH','Gerente','SysAdmin') NOT NULL,
   `Usuario` varchar(50) NOT NULL,
@@ -431,9 +412,9 @@ UNLOCK TABLES;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `actualizar_fecha_cambio_contraseña` BEFORE UPDATE ON `usuarios` FOR EACH ROW BEGIN
-    IF OLD.contraseña <> NEW.contraseña THEN
-        SET NEW.Fecha_cambio_contraseña = NOW();
+/*!50003 CREATE*/ /*!50003 TRIGGER `actualizar_fecha_cambio_contraseña` BEFORE UPDATE ON `usuarios` FOR EACH ROW BEGIN
+    IF OLD.`Contraseña` <> NEW.`Contraseña` THEN
+        SET NEW.`Fecha_cambio_contraseña` = NOW();
     END IF;
 END */;;
 DELIMITER ;
