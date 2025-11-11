@@ -156,7 +156,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             
             if ($stmt) {
-                $stmt->bind_param("ssssssssssssddisss",
+                $stmt->bind_param("ssssssssssssddiss",
                     $nombre_completo, $telefono, $email, $ubicacion_final, $coordenadas,
                     $tipo_vehiculo, $marca_vehiculo, $modelo_vehiculo, $foto_nombre,
                     $tipo_servicio, $descripcion_problema, $urgencia, $distancia_km, $costo_estimado,
