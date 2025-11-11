@@ -61,19 +61,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $validador->requerido($tipo_servicio, 'tipo_servicio', 'El tipo de servicio es requerido');
         $validador->longitud($descripcion, 'descripcion', 10, 500);
         
-        // Validar valores permitidos
-        $vehiculos_validos = ['Baica', 'Automóvil', 'Camioneta', 'Motocicleta', 'Autobus', 'Otro'];
-        if (!in_array($vehiculo, $vehiculos_validos)) {
+        // Validar valores permitidos (alineados al ENUM de la BD)
+        $vehiculos_validos = ['automovil', 'camioneta', 'motocicleta', 'camion'];
+        if (!in_array(strtolower($vehiculo), $vehiculos_validos, true)) {
             $validador->agregarError('vehiculo', 'Tipo de vehículo no válido');
         }
         
-        $tipos_servicio_validos = ['remolque', 'bateria', 'gasolina', 'llanta', 'arranque', 'mecanica'];
-        if (!in_array($tipo_servicio, $tipos_servicio_validos)) {
+        $tipos_servicio_validos = ['remolque', 'bateria', 'gasolina', 'llanta', 'arranque', 'otro'];
+        if (!in_array(strtolower($tipo_servicio), $tipos_servicio_validos, true)) {
             $validador->agregarError('tipo_servicio', 'Tipo de servicio no válido');
         }
         
-        $urgencias_validas = ['normal', 'urgente', 'muy_urgente'];
-        if (!in_array($urgencia, $urgencias_validas)) {
+        $urgencias_validas = ['normal', 'urgente', 'emergencia'];
+        if (!in_array(strtolower($urgencia), $urgencias_validas, true)) {
             $urgencia = 'normal';
         }
         
@@ -102,24 +102,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Si hay errores, mostrarlos
         if ($validador->tieneErrores()) {
             $error_message = $validador->obtenerErroresString();
-        } else {
+    } else {
             // Sanitizar datos adicionales
             $metodo_pago = Validador::sanitizar($_POST['metodo_pago_seleccionado'] ?? 'Efectivo', 'string');
             $paypal_order_id = Validador::sanitizar($_POST['paypal_order_id'] ?? '', 'string');
             $paypal_status = Validador::sanitizar($_POST['paypal_status'] ?? '', 'string');
             $paypal_email = Validador::sanitizar($_POST['paypal_email'] ?? '', 'email');
             $paypal_name = Validador::sanitizar($_POST['paypal_name'] ?? '', 'string');
+        
+        // Procesar la foto del vehículo
+        $foto_nombre = '';
+        if (isset($_FILES['foto']) && $_FILES['foto']['error'] == UPLOAD_ERR_OK) {
+            $upload_dir = "uploads/";
             
-            // Procesar la foto del vehículo
-            $foto_nombre = '';
-            if (isset($_FILES['foto']) && $_FILES['foto']['error'] == UPLOAD_ERR_OK) {
-                $upload_dir = "uploads/";
-                
-                // Crear directorio si no existe
-                if (!file_exists($upload_dir)) {
+            // Crear directorio si no existe
+            if (!file_exists($upload_dir)) {
                     mkdir($upload_dir, 0755, true);
-                }
-                
+            }
+            
                 // Generar nombre único para evitar conflictos
                 $extension = strtolower(pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION));
                 $foto_nombre = uniqid('foto_', true) . '.' . $extension;
@@ -129,40 +129,46 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 if (!move_uploaded_file($_FILES['foto']['tmp_name'], $upload_path)) {
                     $error_message = "Error al subir la foto. Por favor, intenta nuevamente.";
                 }
-            }
-            
+        }
+        
             // Preparar datos para la tabla 'solicitudes'
-            $nombre_completo = $nombre;
-            $ubicacion_final = !empty($ubicacion_destino) ? $ubicacion_destino : $ubicacion_origen;
-            $tipo_vehiculo = $vehiculo;
-            $marca_vehiculo = $marca;
-            $modelo_vehiculo = $modelo;
-            $descripcion_problema = $descripcion;
-            $consentimiento_datos = $consentimiento;
-            $ip_cliente = $_SERVER['REMOTE_ADDR'] ?? '';
-            $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-            
-            // Usar prepared statements para mayor seguridad
+        $nombre_completo = $nombre;
+            $ubicacion_final = $ubicacion_origen;
+            // Coordenadas (si existen campos ocultos de origen)
+            $origen_lat = isset($_POST['origen_lat']) ? trim($_POST['origen_lat']) : '';
+            $origen_lng = isset($_POST['origen_lng']) ? trim($_POST['origen_lng']) : '';
+            $coordenadas = ($origen_lat !== '' && $origen_lng !== '') ? ($origen_lat . ',' . $origen_lng) : null;
+        $tipo_vehiculo = $vehiculo;
+        $marca_vehiculo = $marca;
+        $modelo_vehiculo = $modelo;
+            // Incluir destino como parte de la descripción si se proporcionó
+            $descripcion_problema = $descripcion . (!empty($ubicacion_destino) ? (" | Destino: " . $ubicacion_destino) : "");
+        $consentimiento_datos = $consentimiento;
+        $ip_cliente = $_SERVER['REMOTE_ADDR'] ?? '';
+        $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+            $costo_estimado = $costo;
+
+            // Usar prepared statements (alineado a columnas reales de la tabla 'solicitudes')
             $stmt = $conn->prepare("INSERT INTO solicitudes (
-                nombre_completo, telefono, email, ubicacion, ubicacion_destino, tipo_vehiculo, marca_vehiculo, modelo_vehiculo, 
-                foto_vehiculo, tipo_servicio, descripcion_problema, urgencia, distancia_km, costo_estimado, 
+                nombre_completo, telefono, email, ubicacion, coordenadas, tipo_vehiculo, marca_vehiculo, modelo_vehiculo,
+                foto_vehiculo, tipo_servicio, descripcion_problema, urgencia, distancia_km, costo_estimado,
                 consentimiento_datos, ip_cliente, user_agent
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             
             if ($stmt) {
                 $stmt->bind_param("ssssssssssssddisss",
-                    $nombre_completo, $telefono, $email, $ubicacion_origen, $ubicacion_destino,
+                    $nombre_completo, $telefono, $email, $ubicacion_final, $coordenadas,
                     $tipo_vehiculo, $marca_vehiculo, $modelo_vehiculo, $foto_nombre,
                     $tipo_servicio, $descripcion_problema, $urgencia, $distancia_km, $costo_estimado,
                     $consentimiento_datos, $ip_cliente, $user_agent
                 );
-                
+        
                 if ($stmt->execute()) {
                     $stmt->close();
-                    // Redirigir (PRG) para limpiar el formulario y evitar reenvíos
-                    header("Location: " . htmlspecialchars($_SERVER['PHP_SELF']) . "?enviado=1");
-                    exit;
-                } else {
+            // Redirigir (PRG) para limpiar el formulario y evitar reenvíos
+            header("Location: " . htmlspecialchars($_SERVER['PHP_SELF']) . "?enviado=1");
+            exit;
+        } else {
                     $error_message = "Error al guardar la solicitud. Por favor, intenta nuevamente.";
                     $stmt->close();
                 }
@@ -479,7 +485,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <option value="camioneta" <?php echo (isset($_POST['vehiculo']) && $_POST['vehiculo'] == 'camioneta') ? 'selected' : ''; ?>>Camioneta</option>
                             <option value="motocicleta" <?php echo (isset($_POST['vehiculo']) && $_POST['vehiculo'] == 'motocicleta') ? 'selected' : ''; ?>>Motocicleta</option>
                             <option value="camion" <?php echo (isset($_POST['vehiculo']) && $_POST['vehiculo'] == 'camion') ? 'selected' : ''; ?>>Camión</option>
-                            <option value="bicicleta" <?php echo (isset($_POST['vehiculo']) && $_POST['vehiculo'] == 'bicicleta') ? 'selected' : ''; ?>>Bicicleta</option>
                         </select>
                         <div id="vehiculo-error" class="error-message" role="alert">Por favor seleccione un tipo de vehículo</div>
                     </div>
