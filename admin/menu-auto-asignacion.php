@@ -279,6 +279,42 @@ try {
     error_log("Error al obtener estadísticas: " . $e->getMessage(), 3, "error_log.txt");
 }
 
+$datosRendimiento = $autoAsignacion->obtenerAsignacionesUltimosDias();
+$rendimientoAutomaticas = $datosRendimiento['automaticas'] ?? [];
+$rendimientoManuales = $datosRendimiento['manuales'] ?? [];
+$fechasRendimiento = $datosRendimiento['fechas'] ?? [];
+$fuenteRendimiento = $datosRendimiento['fuente'] ?? 'historial_asignaciones';
+
+if (empty($rendimientoAutomaticas)) {
+    $rendimientoAutomaticas = array_fill(0, 7, 0);
+}
+if (empty($rendimientoManuales)) {
+    $rendimientoManuales = array_fill(0, count($rendimientoAutomaticas), 0);
+}
+
+$diasSemanaCorto = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+$labelsRendimiento = [];
+
+if (!empty($fechasRendimiento)) {
+    foreach ($fechasRendimiento as $fechaDia) {
+        $indice = (int)date('w', strtotime($fechaDia));
+        $labelsRendimiento[] = $diasSemanaCorto[$indice] ?? $fechaDia;
+    }
+} else {
+    // Mantener coherencia con cantidad de datos
+    $labelsRendimiento = array_slice($diasSemanaCorto, -count($rendimientoAutomaticas)) ?: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+}
+
+// Asegurar que número de etiquetas y datos coincida
+$conteoDatos = count($rendimientoAutomaticas);
+if (count($labelsRendimiento) !== $conteoDatos) {
+    $labelsRendimiento = array_slice(array_merge($labelsRendimiento, $labelsRendimiento), 0, $conteoDatos);
+}
+
+$rendimientoAutomaticasJson = json_encode(array_map('intval', $rendimientoAutomaticas), JSON_NUMERIC_CHECK);
+$rendimientoManualesJson = json_encode(array_map('intval', $rendimientoManuales), JSON_NUMERIC_CHECK);
+$labelsRendimientoJson = json_encode($labelsRendimiento, JSON_UNESCAPED_UNICODE);
+
 // Obtener solicitudes pendientes con validación (usando la misma lógica que procesar-solicitud.php)
 // Adaptar si no existe la columna grua_asignada_id
 $col_grua_asignada = $conn->query("SHOW COLUMNS FROM solicitudes LIKE 'grua_asignada_id'");
@@ -753,11 +789,16 @@ $usuario_cargo = $_SESSION['usuario_cargo'] ?? 'Operador';
         </form>
     </div>
 
-    <!-- Gráfico de Rendimiento -->
-    <div class="chart-panel">
-        <h3><i class="fas fa-chart-line"></i> Rendimiento del Sistema (Últimos 7 días)</h3>
-        <canvas id="performanceChart" width="400" height="150"></canvas>
-    </div>
+      <!-- Gráfico de Rendimiento -->
+      <div class="chart-panel">
+          <h3><i class="fas fa-chart-line"></i> Rendimiento del Sistema (Últimos 7 días)</h3>
+          <canvas id="performanceChart" width="400" height="150"></canvas>
+          <p class="chart-note">
+              <small class="text-muted">
+                  Fuente de datos: <?php echo $fuenteRendimiento === 'historial_asignaciones' ? 'Historial de asignaciones' : 'Solicitudes asignadas'; ?>
+              </small>
+          </p>
+      </div>
 
     <!-- Historial de Asignaciones -->
     <div class="history-panel">
@@ -770,7 +811,36 @@ $usuario_cargo = $_SESSION['usuario_cargo'] ?? 'Operador';
                            LEFT JOIN gruas g ON ha.grua_id = g.ID
                            ORDER BY ha.fecha_asignacion DESC 
                            LIMIT 10";
-        $result_historial = $conn->query($query_historial);
+         $result_historial = $conn->query($query_historial);
+          $historial_fuente = 'historial_asignaciones';
+          $historial_resultado = $result_historial;
+          
+          if (!$historial_resultado || $historial_resultado->num_rows === 0) {
+              $query_historial_fallback = "SELECT 
+                                              s.id as solicitud_id,
+                                              s.nombre_completo,
+                                              s.ubicacion as ubicacion_solicitud,
+                                              s.metodo_asignacion,
+                                              s.fecha_asignacion,
+                                              s.grua_asignada_id as grua_id,
+                                              NULL as criterios_usados,
+                                              NULL as distancia_km,
+                                              NULL as tiempo_asignacion_segundos,
+                                              g.Placa,
+                                              g.Tipo,
+                                              g.coordenadas_actuales as coordenadas_grua
+                                          FROM solicitudes s
+                                          LEFT JOIN gruas g ON s.grua_asignada_id = g.ID
+                                          WHERE s.fecha_asignacion IS NOT NULL
+                                          ORDER BY s.fecha_asignacion DESC
+                                          LIMIT 10";
+              $result_historial_fallback = $conn->query($query_historial_fallback);
+              
+              if ($result_historial_fallback && $result_historial_fallback->num_rows > 0) {
+                  $historial_resultado = $result_historial_fallback;
+                  $historial_fuente = 'solicitudes';
+              }
+          }
         
         // Función para calcular distancia usando Haversine
         function calcularDistanciaHaversine($lat1, $lng1, $lat2, $lng2) {
@@ -827,7 +897,7 @@ $usuario_cargo = $_SESSION['usuario_cargo'] ?? 'Operador';
         }
         ?>
         
-        <?php if ($result_historial && $result_historial->num_rows > 0): ?>
+          <?php if ($historial_resultado && $historial_resultado->num_rows > 0): ?>
         <div class="table-responsive">
             <table class="table">
                 <thead>
@@ -842,7 +912,7 @@ $usuario_cargo = $_SESSION['usuario_cargo'] ?? 'Operador';
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while ($row = $result_historial->fetch_assoc()): 
+                      <?php while ($row = $historial_resultado->fetch_assoc()): 
                         // Calcular distancia si no está disponible
                         $distancia_mostrar = $row['distancia_km'];
                         $metodo_calculo = 'Guardada';
@@ -877,6 +947,11 @@ $usuario_cargo = $_SESSION['usuario_cargo'] ?? 'Operador';
                                 }
                             }
                         }
+                          
+                          $criterios_texto = $row['criterios_usados'] ?? '';
+                          if (!$criterios_texto && $historial_fuente === 'solicitudes') {
+                              $criterios_texto = 'Sin información detallada';
+                          }
                     ?>
                     <tr>
                         <td>
@@ -907,7 +982,7 @@ $usuario_cargo = $_SESSION['usuario_cargo'] ?? 'Operador';
                         </td>
                         <td><?php echo $row['tiempo_asignacion_segundos'] ? $row['tiempo_asignacion_segundos'] . ' ms' : 'N/A'; ?></td>
                         <td>
-                            <small class="text-muted"><?php echo htmlspecialchars($row['criterios_usados'] ?? 'N/A'); ?></small>
+                              <small class="text-muted"><?php echo htmlspecialchars($criterios_texto ?? 'N/A'); ?></small>
                         </td>
                     </tr>
                     <?php endwhile; ?>
@@ -919,6 +994,13 @@ $usuario_cargo = $_SESSION['usuario_cargo'] ?? 'Operador';
                 <i class="fas fa-list"></i> Ver historial completo
             </a>
         </div>
+          <?php if ($historial_fuente === 'solicitudes'): ?>
+          <p class="table-note text-muted">
+              <small>
+                  Mostrando asignaciones recientes desde la tabla de solicitudes porque aún no existen registros en el historial de asignaciones.
+              </small>
+          </p>
+          <?php endif; ?>
         <?php else: ?>
         <div class="no-data">
             <i class="fas fa-inbox"></i>
@@ -949,37 +1031,17 @@ document.addEventListener('DOMContentLoaded', function() {
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+                  labels: <?php echo $labelsRendimientoJson; ?>,
                 datasets: [{
                     label: 'Asignaciones Automáticas',
-                    data: [<?php 
-                        // Obtener datos reales de los últimos 7 días
-                        for($i = 6; $i >= 0; $i--) {
-                            $fecha = date('Y-m-d', strtotime("-$i days"));
-                            $q = "SELECT COUNT(*) as total FROM historial_asignaciones 
-                                  WHERE DATE(fecha_asignacion) = '$fecha' AND metodo_asignacion = 'automatica'";
-                            $r = $conn->query($q);
-                            echo $r ? $r->fetch_assoc()['total'] : 0;
-                            if($i > 0) echo ',';
-                        }
-                    ?>],
+                      data: <?php echo $rendimientoAutomaticasJson; ?>,
                     borderColor: '#6a0dad',
                     backgroundColor: 'rgba(106, 13, 173, 0.1)',
                     fill: true,
                     tension: 0.4
                 }, {
                     label: 'Asignaciones Manuales',
-                    data: [<?php 
-                        // Obtener datos reales de los últimos 7 días
-                        for($i = 6; $i >= 0; $i--) {
-                            $fecha = date('Y-m-d', strtotime("-$i days"));
-                            $q = "SELECT COUNT(*) as total FROM historial_asignaciones 
-                                  WHERE DATE(fecha_asignacion) = '$fecha' AND metodo_asignacion = 'manual'";
-                            $r = $conn->query($q);
-                            echo $r ? $r->fetch_assoc()['total'] : 0;
-                            if($i > 0) echo ',';
-                        }
-                    ?>],
+                      data: <?php echo $rendimientoManualesJson; ?>,
                     borderColor: '#4b0082',
                     backgroundColor: 'rgba(75, 0, 130, 0.1)',
                     fill: true,
