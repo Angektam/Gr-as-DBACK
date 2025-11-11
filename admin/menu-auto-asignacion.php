@@ -86,6 +86,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // CSRF TEMPORALMENTE DESHABILITADO - ELIMINAR EN PRODUCCIÓN
     if (true) {
         
+        // Forzar auto-asignación habilitada siempre activa
+        $autoAsignacion->actualizarConfiguracion('auto_asignacion_habilitada', '1');
+        
         // Procesar GUARDAR CONFIGURACIÓN
         if (isset($_POST['guardar_configuracion'])) {
             $parametros_actualizados = 0;
@@ -102,7 +105,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $param_name = 'param_' . $checkbox;
                 // Si el checkbox está marcado, estará en $_POST con valor '1'
                 // Si no está marcado, NO estará en $_POST, así que lo ponemos en '0'
-                $valor = isset($_POST[$param_name]) && $_POST[$param_name] == '1' ? '1' : '0';
+                // Forzar 'auto_asignacion_habilitada' siempre a '1'
+                $valor = $checkbox === 'auto_asignacion_habilitada'
+                    ? '1'
+                    : (isset($_POST[$param_name]) && $_POST[$param_name] == '1' ? '1' : '0');
                 
                 if ($autoAsignacion->actualizarConfiguracion($checkbox, $valor)) {
                     $parametros_actualizados++;
@@ -258,6 +264,8 @@ if (!isset($_SESSION['csrf_token'])) {
 
 // Obtener configuración actual
 $configuracion = $autoAsignacion->obtenerConfiguracion();
+// Forzar estado "Activa" en UI
+$configuracion['auto_asignacion_habilitada'] = '1';
 
 // Obtener estadísticas con manejo de errores
 try {
@@ -330,7 +338,8 @@ $gruas_inactivas = $result_gruas_inactivas ? $result_gruas_inactivas->fetch_asso
 // NUEVO: Verificar estado del servicio (clima)
 $query_clima = "SELECT valor FROM configuracion_auto_asignacion WHERE parametro = 'servicio_suspendido_clima' LIMIT 1";
 $result_clima = $conn->query($query_clima);
-$servicio_suspendido = ($result_clima && $result_clima->num_rows > 0) ? $result_clima->fetch_assoc()['valor'] == '1' : false;
+// Ignorar suspensión por clima: siempre activo
+$servicio_suspendido = false;
 
 // Obtener información del usuario
 $usuario_nombre = $_SESSION['usuario_nombre'] ?? 'Usuario';
