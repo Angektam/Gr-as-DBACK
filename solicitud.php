@@ -200,7 +200,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <nav class="navbar" aria-label="Navegación principal">
             <div class="nav-content">
                 <a href="index.php" class="navbar-brand">
-                    <img src="Elementos/LogoDBACK.png" alt="Logo DBACK" width="50" height="50">
+                    <img src="assets/images/LogoDBACK.png" alt="Logo DBACK" width="50" height="50">
                     <h1>Grúas DBACK</h1>
                 </a>
                 

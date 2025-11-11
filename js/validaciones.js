@@ -259,12 +259,12 @@ function sanitizar(texto) {
 }
 
 // Función para validar formulario completo
-function validarFormulario(formulario, reglas) {
+function validarFormulario(formulario, reglas = {}) {
     const validador = new Validador();
     const formData = new FormData(formulario);
 
     // Aplicar reglas de validación
-    for (const [campo, regla] of Object.entries(reglas)) {
+    for (const [campo, regla] of Object.entries(reglas || {})) {
         const valor = formData.get(campo);
         const input = formulario.querySelector(`[name="${campo}"]`);
 
