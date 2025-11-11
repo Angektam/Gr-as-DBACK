@@ -315,6 +315,16 @@ $rendimientoAutomaticasJson = json_encode(array_map('intval', $rendimientoAutoma
 $rendimientoManualesJson = json_encode(array_map('intval', $rendimientoManuales), JSON_NUMERIC_CHECK);
 $labelsRendimientoJson = json_encode($labelsRendimiento, JSON_UNESCAPED_UNICODE);
 
+$columnasHistorial = $autoAsignacion->obtenerColumnasDisponibles('historial_asignaciones');
+$columnasSolicitudes = $autoAsignacion->obtenerColumnasDisponibles('solicitudes');
+$columnasGruas = $autoAsignacion->obtenerColumnasDisponibles('gruas');
+
+$columnaFechaHistorial = $autoAsignacion->obtenerColumnaFechaDisponible('historial_asignaciones', ['fecha_asignacion', 'fecha_registro', 'fecha', 'creada_en', 'created_at']);
+$columnaFechaSolicitudes = $autoAsignacion->obtenerColumnaFechaDisponible('solicitudes', ['fecha_asignacion', 'fecha_servicio', 'fecha_solicitud', 'fecha', 'creada_en', 'created_at']);
+
+$columnaFechaHistorialOrden = ($columnaFechaHistorial && preg_match('/^[a-zA-Z0-9_]+$/', $columnaFechaHistorial)) ? $columnaFechaHistorial : null;
+$columnaFechaSolicitudesOrden = ($columnaFechaSolicitudes && preg_match('/^[a-zA-Z0-9_]+$/', $columnaFechaSolicitudes)) ? $columnaFechaSolicitudes : null;
+
 // Obtener solicitudes pendientes con validación (usando la misma lógica que procesar-solicitud.php)
 // Adaptar si no existe la columna grua_asignada_id
 $col_grua_asignada = $conn->query("SHOW COLUMNS FROM solicitudes LIKE 'grua_asignada_id'");
@@ -804,43 +814,119 @@ $usuario_cargo = $_SESSION['usuario_cargo'] ?? 'Operador';
     <div class="history-panel">
         <h3><i class="fas fa-history"></i> Historial Reciente de Asignaciones</h3>
         <?php
-        $query_historial = "SELECT ha.*, s.nombre_completo, s.ubicacion as ubicacion_solicitud, 
-                                   g.Placa, g.Tipo, g.coordenadas_actuales as coordenadas_grua
-                           FROM historial_asignaciones ha
-                           LEFT JOIN solicitudes s ON ha.solicitud_id = s.id
-                           LEFT JOIN gruas g ON ha.grua_id = g.ID
-                           ORDER BY ha.fecha_asignacion DESC 
-                           LIMIT 10";
-         $result_historial = $conn->query($query_historial);
-          $historial_fuente = 'historial_asignaciones';
-          $historial_resultado = $result_historial;
-          
-          if (!$historial_resultado || $historial_resultado->num_rows === 0) {
-              $query_historial_fallback = "SELECT 
-                                              s.id as solicitud_id,
-                                              s.nombre_completo,
-                                              s.ubicacion as ubicacion_solicitud,
-                                              s.metodo_asignacion,
-                                              s.fecha_asignacion,
-                                              s.grua_asignada_id as grua_id,
-                                              NULL as criterios_usados,
-                                              NULL as distancia_km,
-                                              NULL as tiempo_asignacion_segundos,
-                                              g.Placa,
-                                              g.Tipo,
-                                              g.coordenadas_actuales as coordenadas_grua
-                                          FROM solicitudes s
-                                          LEFT JOIN gruas g ON s.grua_asignada_id = g.ID
-                                          WHERE s.fecha_asignacion IS NOT NULL
-                                          ORDER BY s.fecha_asignacion DESC
-                                          LIMIT 10";
-              $result_historial_fallback = $conn->query($query_historial_fallback);
-              
-              if ($result_historial_fallback && $result_historial_fallback->num_rows > 0) {
-                  $historial_resultado = $result_historial_fallback;
-                  $historial_fuente = 'solicitudes';
-              }
-          }
+        $select_historial_campos = ['ha.*'];
+        $join_historial = [];
+        
+        if (!empty($columnasHistorial) && in_array('solicitud_id', $columnasHistorial, true) && !empty($columnasSolicitudes)) {
+            $select_historial_campos[] = 's.nombre_completo AS solicitud_nombre';
+            $select_historial_campos[] = 's.ubicacion AS solicitud_ubicacion';
+            $select_historial_campos[] = in_array('fecha_asignacion', $columnasSolicitudes, true) ? 's.fecha_asignacion AS solicitud_fecha_asignacion' : 'NULL AS solicitud_fecha_asignacion';
+            $select_historial_campos[] = in_array('fecha_solicitud', $columnasSolicitudes, true) ? 's.fecha_solicitud AS solicitud_fecha_solicitud' : 'NULL AS solicitud_fecha_solicitud';
+            $join_historial[] = 'LEFT JOIN solicitudes s ON ha.solicitud_id = s.id';
+        } else {
+            $select_historial_campos[] = 'NULL AS solicitud_nombre';
+            $select_historial_campos[] = 'NULL AS solicitud_ubicacion';
+            $select_historial_campos[] = 'NULL AS solicitud_fecha_asignacion';
+            $select_historial_campos[] = 'NULL AS solicitud_fecha_solicitud';
+        }
+        
+        if (!empty($columnasHistorial) && in_array('grua_id', $columnasHistorial, true) && !empty($columnasGruas)) {
+            $join_historial[] = 'LEFT JOIN gruas g ON ha.grua_id = g.ID';
+            $select_historial_campos[] = in_array('Placa', $columnasGruas, true) ? 'g.Placa AS grua_placa' : 'NULL AS grua_placa';
+            $select_historial_campos[] = in_array('Tipo', $columnasGruas, true) ? 'g.Tipo AS grua_tipo' : 'NULL AS grua_tipo';
+            if (in_array('coordenadas_actuales', $columnasGruas, true)) {
+                $select_historial_campos[] = 'g.coordenadas_actuales AS coordenadas_grua';
+            } elseif (in_array('Coordenadas', $columnasGruas, true)) {
+                $select_historial_campos[] = 'g.Coordenadas AS coordenadas_grua';
+            } else {
+                $select_historial_campos[] = 'NULL AS coordenadas_grua';
+            }
+        } else {
+            $select_historial_campos[] = 'NULL AS grua_placa';
+            $select_historial_campos[] = 'NULL AS grua_tipo';
+            $select_historial_campos[] = 'NULL AS coordenadas_grua';
+        }
+        
+        if ($columnaFechaHistorialOrden) {
+            $select_historial_campos[] = "ha.$columnaFechaHistorialOrden AS fecha_referencia";
+        } else {
+            $select_historial_campos[] = 'NULL AS fecha_referencia';
+        }
+        
+        if (!empty($columnasHistorial)) {
+            $query_historial = 'SELECT ' . implode(', ', $select_historial_campos) . ' FROM historial_asignaciones ha';
+            if (!empty($join_historial)) {
+                $query_historial .= ' ' . implode(' ', $join_historial);
+            }
+            $query_historial .= $columnaFechaHistorialOrden ? " ORDER BY ha.$columnaFechaHistorialOrden DESC" : " ORDER BY ha.id DESC";
+            $query_historial .= " LIMIT 10";
+            $result_historial = $conn->query($query_historial);
+        } else {
+            $result_historial = false;
+        }
+        
+        $historial_fuente = 'historial_asignaciones';
+        $historial_resultado = $result_historial;
+        
+        if (!$historial_resultado || $historial_resultado->num_rows === 0) {
+            $select_solicitudes_campos = [
+                's.id AS solicitud_id',
+                in_array('nombre_completo', $columnasSolicitudes, true) ? 's.nombre_completo AS solicitud_nombre' : 'NULL AS solicitud_nombre',
+                in_array('ubicacion', $columnasSolicitudes, true) ? 's.ubicacion AS solicitud_ubicacion' : 'NULL AS solicitud_ubicacion',
+                in_array('metodo_asignacion', $columnasSolicitudes, true) ? 's.metodo_asignacion' : 'NULL AS metodo_asignacion',
+                in_array('fecha_asignacion', $columnasSolicitudes, true) ? 's.fecha_asignacion AS solicitud_fecha_asignacion' : 'NULL AS solicitud_fecha_asignacion',
+                in_array('fecha_solicitud', $columnasSolicitudes, true) ? 's.fecha_solicitud AS solicitud_fecha_solicitud' : 'NULL AS solicitud_fecha_solicitud',
+                in_array('grua_asignada_id', $columnasSolicitudes, true) ? 's.grua_asignada_id AS grua_id' : 'NULL AS grua_id',
+                'NULL AS criterios_usados',
+                'NULL AS distancia_km',
+                'NULL AS tiempo_asignacion_segundos'
+            ];
+            
+            $join_solicitudes = [];
+            $where_solicitudes = [];
+            
+            if (in_array('grua_asignada_id', $columnasSolicitudes, true) && !empty($columnasGruas)) {
+                $join_solicitudes[] = 'LEFT JOIN gruas g ON s.grua_asignada_id = g.ID';
+                $select_solicitudes_campos[] = in_array('Placa', $columnasGruas, true) ? 'g.Placa AS grua_placa' : 'NULL AS grua_placa';
+                $select_solicitudes_campos[] = in_array('Tipo', $columnasGruas, true) ? 'g.Tipo AS grua_tipo' : 'NULL AS grua_tipo';
+                if (in_array('coordenadas_actuales', $columnasGruas, true)) {
+                    $select_solicitudes_campos[] = 'g.coordenadas_actuales AS coordenadas_grua';
+                } elseif (in_array('Coordenadas', $columnasGruas, true)) {
+                    $select_solicitudes_campos[] = 'g.Coordenadas AS coordenadas_grua';
+                } else {
+                    $select_solicitudes_campos[] = 'NULL AS coordenadas_grua';
+                }
+                $where_solicitudes[] = 's.grua_asignada_id IS NOT NULL';
+            } else {
+                $select_solicitudes_campos[] = 'NULL AS grua_placa';
+                $select_solicitudes_campos[] = 'NULL AS grua_tipo';
+                $select_solicitudes_campos[] = 'NULL AS coordenadas_grua';
+            }
+            
+            if ($columnaFechaSolicitudesOrden) {
+                $select_solicitudes_campos[] = "s.$columnaFechaSolicitudesOrden AS fecha_referencia";
+                $where_solicitudes[] = "s.$columnaFechaSolicitudesOrden IS NOT NULL";
+            } else {
+                $select_solicitudes_campos[] = 'NULL AS fecha_referencia';
+            }
+            
+            $query_historial_fallback = 'SELECT ' . implode(', ', $select_solicitudes_campos) . ' FROM solicitudes s';
+            if (!empty($join_solicitudes)) {
+                $query_historial_fallback .= ' ' . implode(' ', $join_solicitudes);
+            }
+            if (!empty($where_solicitudes)) {
+                $query_historial_fallback .= ' WHERE ' . implode(' AND ', $where_solicitudes);
+            }
+            $query_historial_fallback .= $columnaFechaSolicitudesOrden ? " ORDER BY s.$columnaFechaSolicitudesOrden DESC" : " ORDER BY s.id DESC";
+            $query_historial_fallback .= " LIMIT 10";
+            
+            $result_historial_fallback = $conn->query($query_historial_fallback);
+            
+            if ($result_historial_fallback && $result_historial_fallback->num_rows > 0) {
+                $historial_resultado = $result_historial_fallback;
+                $historial_fuente = 'solicitudes';
+            }
+        }
         
         // Función para calcular distancia usando Haversine
         function calcularDistanciaHaversine($lat1, $lng1, $lat2, $lng2) {
@@ -912,17 +998,53 @@ $usuario_cargo = $_SESSION['usuario_cargo'] ?? 'Operador';
                     </tr>
                 </thead>
                 <tbody>
-                      <?php while ($row = $historial_resultado->fetch_assoc()): 
+                    <?php while ($row = $historial_resultado->fetch_assoc()): 
+                        $nombre_solicitud = $row['solicitud_nombre'] ?? ($row['nombre_completo'] ?? 'N/A');
+                        $ubicacion_solicitud = $row['solicitud_ubicacion'] ?? ($row['ubicacion_solicitud'] ?? '');
+                        $placa_grua = $row['grua_placa'] ?? ($row['Placa'] ?? 'N/A');
+                        $tipo_grua = $row['grua_tipo'] ?? ($row['Tipo'] ?? 'N/A');
+                        $coordenadas_grua = $row['coordenadas_grua'] ?? ($row['coordenadas_actuales'] ?? '');
+                        
+                        $fecha_referencia = null;
+                        $posibles_fechas = [
+                            'fecha_referencia',
+                            'fecha_asignacion',
+                            'fecha_registro',
+                            'fecha',
+                            'creada_en',
+                            'created_at',
+                            'solicitud_fecha_asignacion',
+                            'solicitud_fecha_solicitud',
+                            'fecha_solicitud'
+                        ];
+                        foreach ($posibles_fechas as $campo_fecha) {
+                            if (!empty($row[$campo_fecha]) && $row[$campo_fecha] !== '0000-00-00 00:00:00') {
+                                $fecha_referencia = $row[$campo_fecha];
+                                break;
+                            }
+                        }
+                        
+                        $fecha_formateada = $fecha_referencia ? date('d/m/Y', strtotime($fecha_referencia)) : 'N/A';
+                        $hora_formateada = $fecha_referencia ? date('H:i:s', strtotime($fecha_referencia)) : '';
+                        
+                        $metodo_asignacion = strtolower($row['metodo_asignacion'] ?? '');
+                        if ($metodo_asignacion === '') {
+                            $metodo_asignacion = 'desconocido';
+                        }
+                        $metodo_clase = $metodo_asignacion === 'automatica' ? 'success' : ($metodo_asignacion === 'manual' ? 'info' : 'secondary');
+                        $metodo_icono = $metodo_asignacion === 'automatica' ? 'robot' : ($metodo_asignacion === 'manual' ? 'user' : 'question');
+                        $metodo_texto = $metodo_asignacion === 'automatica' ? 'Automática' : ($metodo_asignacion === 'manual' ? 'Manual' : 'No disponible');
+                        
                         // Calcular distancia si no está disponible
                         $distancia_mostrar = $row['distancia_km'];
                         $metodo_calculo = 'Guardada';
                         
                         if (!$distancia_mostrar || $distancia_mostrar == 0) {
                             // Método 1: Intentar calcular usando coordenadas GPS
-                            if ($row['coordenadas_grua']) {
-                                $coords_grua = explode(',', $row['coordenadas_grua']);
-                                if (count($coords_grua) == 2) {
-                                    $coords_solicitud = geocodificarDireccion($row['ubicacion_solicitud']);
+                            if ($coordenadas_grua) {
+                                $coords_grua = explode(',', $coordenadas_grua);
+                                if (count($coords_grua) == 2 && $ubicacion_solicitud) {
+                                    $coords_solicitud = geocodificarDireccion($ubicacion_solicitud);
                                     if ($coords_solicitud) {
                                         $distancia_mostrar = calcularDistanciaHaversine(
                                             $coords_solicitud['lat'], 
@@ -938,8 +1060,8 @@ $usuario_cargo = $_SESSION['usuario_cargo'] ?? 'Operador';
                             // Método 2: Si no hay coordenadas GPS, usar estimación
                             if (!$distancia_mostrar || $distancia_mostrar == 0) {
                                 $distancia_estimada = calcularDistanciaEstimada(
-                                    $row['ubicacion_solicitud'], 
-                                    $row['coordenadas_grua']
+                                    $ubicacion_solicitud, 
+                                    $coordenadas_grua
                                 );
                                 if ($distancia_estimada) {
                                     $distancia_mostrar = $distancia_estimada;
@@ -947,26 +1069,30 @@ $usuario_cargo = $_SESSION['usuario_cargo'] ?? 'Operador';
                                 }
                             }
                         }
-                          
-                          $criterios_texto = $row['criterios_usados'] ?? '';
-                          if (!$criterios_texto && $historial_fuente === 'solicitudes') {
-                              $criterios_texto = 'Sin información detallada';
-                          }
+                        
+                        $criterios_texto = $row['criterios_usados'] ?? '';
+                        if (!$criterios_texto && $historial_fuente === 'solicitudes') {
+                            $criterios_texto = 'Sin información detallada';
+                        }
                     ?>
                     <tr>
                         <td>
-                            <strong><?php echo date('d/m/Y', strtotime($row['fecha_asignacion'])); ?></strong><br>
-                            <small><?php echo date('H:i:s', strtotime($row['fecha_asignacion'])); ?></small>
+                            <?php if ($fecha_referencia): ?>
+                            <strong><?php echo htmlspecialchars($fecha_formateada); ?></strong><br>
+                            <small><?php echo htmlspecialchars($hora_formateada); ?></small>
+                            <?php else: ?>
+                            <span class="text-muted">N/A</span>
+                            <?php endif; ?>
                         </td>
-                        <td><?php echo htmlspecialchars($row['nombre_completo'] ?? 'N/A'); ?></td>
+                        <td><?php echo htmlspecialchars($nombre_solicitud); ?></td>
                         <td>
-                            <span class="badge badge-primary"><?php echo htmlspecialchars($row['Placa'] ?? 'N/A'); ?></span>
-                            <br><small class="text-muted"><?php echo htmlspecialchars($row['Tipo'] ?? 'N/A'); ?></small>
+                            <span class="badge badge-primary"><?php echo htmlspecialchars($placa_grua ?? 'N/A'); ?></span>
+                            <br><small class="text-muted"><?php echo htmlspecialchars($tipo_grua ?? 'N/A'); ?></small>
                         </td>
                         <td>
-                            <span class="badge badge-<?php echo $row['metodo_asignacion'] == 'automatica' ? 'success' : 'info'; ?>">
-                                <i class="fas fa-<?php echo $row['metodo_asignacion'] == 'automatica' ? 'robot' : 'user'; ?>"></i>
-                                <?php echo $row['metodo_asignacion'] == 'automatica' ? 'Automática' : 'Manual'; ?>
+                            <span class="badge badge-<?php echo $metodo_clase; ?>">
+                                <i class="fas fa-<?php echo $metodo_icono; ?>"></i>
+                                <?php echo htmlspecialchars($metodo_texto); ?>
                             </span>
                         </td>
                         <td>
@@ -982,7 +1108,7 @@ $usuario_cargo = $_SESSION['usuario_cargo'] ?? 'Operador';
                         </td>
                         <td><?php echo $row['tiempo_asignacion_segundos'] ? $row['tiempo_asignacion_segundos'] . ' ms' : 'N/A'; ?></td>
                         <td>
-                              <small class="text-muted"><?php echo htmlspecialchars($criterios_texto ?? 'N/A'); ?></small>
+                            <small class="text-muted"><?php echo htmlspecialchars($criterios_texto ?? 'N/A'); ?></small>
                         </td>
                     </tr>
                     <?php endwhile; ?>

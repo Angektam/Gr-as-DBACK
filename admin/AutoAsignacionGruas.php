@@ -81,6 +81,46 @@ class AutoAsignacionGruas {
     }
     
     /**
+     * Obtener lista de columnas disponibles para una tabla permitida
+     */
+    public function obtenerColumnasDisponibles($tabla) {
+        return $this->obtenerColumnasTabla($tabla);
+    }
+    
+    /**
+     * Obtener el primer nombre de columna de fecha disponible según preferencias
+     */
+    public function obtenerColumnaFechaDisponible($tabla, $preferencias = []) {
+        $columnas = $this->obtenerColumnasTabla($tabla);
+        if (empty($columnas)) {
+            return null;
+        }
+        
+        if (empty($preferencias)) {
+            $preferencias = [
+                'historial_asignaciones' => ['fecha_asignacion', 'fecha_registro', 'fecha', 'creada_en', 'created_at'],
+                'solicitudes' => ['fecha_asignacion', 'fecha_servicio', 'fecha_solicitud', 'fecha', 'creada_en', 'created_at'],
+                'gruas' => ['fecha_actualizacion', 'ultima_actualizacion', 'fecha', 'creada_en'],
+                'equipos_ayuda' => ['fecha_actualizacion', 'fecha', 'creada_en']
+            ][$tabla] ?? ['fecha_asignacion', 'fecha', 'creada_en', 'created_at'];
+        }
+        
+        foreach ($preferencias as $col) {
+            if (in_array($col, $columnas, true)) {
+                return $col;
+            }
+        }
+        
+        foreach ($columnas as $col) {
+            if (stripos($col, 'fecha') !== false || stripos($col, 'date') !== false) {
+                return $col;
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
      * Verificar si la auto-asignación está habilitada
      */
     public function estaHabilitada() {
@@ -1166,15 +1206,24 @@ class AutoAsignacionGruas {
             return 0;
         }
         
-        if (!$this->columnaExiste($tabla, 'fecha_asignacion')) {
+        $preferencias = $tabla === 'solicitudes'
+            ? ['fecha_asignacion', 'fecha_servicio', 'fecha_solicitud', 'fecha', 'creada_en', 'created_at']
+            : ['fecha_asignacion', 'fecha_registro', 'fecha', 'creada_en', 'created_at'];
+        $columnaFecha = $this->obtenerColumnaFechaDisponible($tabla, $preferencias);
+        
+        if (!$columnaFecha) {
+            return 0;
+        }
+        
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $columnaFecha)) {
             return 0;
         }
         
         $fechaSeguro = $this->conn->real_escape_string($fecha);
-        $query = "SELECT COUNT(*) as total FROM $tabla WHERE DATE(fecha_asignacion) = '$fechaSeguro'";
+        $query = "SELECT COUNT(*) as total FROM $tabla WHERE DATE($columnaFecha) = '$fechaSeguro'";
         
         if ($metodo !== null) {
-            if (!$this->columnaExiste($tabla, 'metodo_asignacion')) {
+            if (!$this->columnaExiste($tabla, 'metodo_asignacion') || !preg_match('/^[a-zA-Z0-9_]+$/', 'metodo_asignacion')) {
                 return 0;
             }
             $metodoSeguro = $this->conn->real_escape_string($metodo);
@@ -1198,16 +1247,25 @@ class AutoAsignacionGruas {
         $automaticas = [];
         $manuales = [];
         
-        $columnaFechaDisponible = $this->columnaExiste($tabla, 'fecha_asignacion');
+        $preferencias = $tabla === 'solicitudes'
+            ? ['fecha_asignacion', 'fecha_servicio', 'fecha_solicitud', 'fecha', 'creada_en', 'created_at']
+            : ['fecha_asignacion', 'fecha_registro', 'fecha', 'creada_en', 'created_at'];
+        $columnaFecha = $this->obtenerColumnaFechaDisponible($tabla, $preferencias);
         $columnaMetodoDisponible = $usarMetodos && $this->columnaExiste($tabla, 'metodo_asignacion');
         
-        foreach ($fechas as $fecha) {
-            if (!$columnaFechaDisponible) {
+        if (!$columnaFecha || !preg_match('/^[a-zA-Z0-9_]+$/', $columnaFecha)) {
+            foreach ($fechas as $_) {
                 $automaticas[] = 0;
                 $manuales[] = 0;
-                continue;
             }
-            
+            return [
+                'automaticas' => $automaticas,
+                'manuales' => $manuales,
+                'fechas' => $fechas
+            ];
+        }
+        
+        foreach ($fechas as $fecha) {
             if ($columnaMetodoDisponible) {
                 $automaticas[] = $this->contarAsignacionesPorDia($tabla, $fecha, 'automatica');
                 $manuales[] = $this->contarAsignacionesPorDia($tabla, $fecha, 'manual');
