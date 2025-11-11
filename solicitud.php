@@ -186,9 +186,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <title>Solicitar Servicio de Grúa | Grúas DBACK</title>
     <link rel="stylesheet" href="CSS/Solicitud_ARCO.css">
     <link rel="stylesheet" href="js/validaciones.css">
+    <link rel="stylesheet" href="CSS/chatbot.css">
     <script src="js/validaciones.js" defer></script>
 </head>
-<body>
+<body data-chatbot-form-url="solicitud.php" data-chatbot-phone="529992592882" data-chatbot-whatsapp="526688253351">
     <header>
         <nav class="navbar" aria-label="Navegación principal">
             <div class="nav-content">
@@ -914,6 +915,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
     </main>
 
+    <div class="chatbot-wrapper" id="chatbot-window" role="dialog" aria-modal="false" aria-label="Asistente virtual de Grúas DBACK">
+        <div class="chatbot-header">
+            <div class="chatbot-header-info">
+                <h3>Asistente DBACK</h3>
+                <span>Agenda tu servicio en minutos</span>
+            </div>
+            <button class="chatbot-close" type="button" aria-label="Cerrar asistente">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="chatbot-body" aria-live="polite"></div>
+        <div class="chatbot-options-wrapper">
+            <div class="chatbot-options chatbot-dynamic-options"></div>
+        </div>
+        <div class="chatbot-footer">
+            <input type="text" class="chatbot-input" placeholder="Escribe tu respuesta aquí..." aria-label="Mensaje para el asistente">
+            <button class="chatbot-send" type="button">
+                Enviar
+            </button>
+        </div>
+    </div>
+
+    <button class="chatbot-toggle" type="button" aria-controls="chatbot-window" aria-expanded="false" aria-label="Abrir asistente virtual">
+        <i class="fas fa-headset"></i>
+        <div>
+            Habla con un asesor
+            <span class="chatbot-status">Respuesta inmediata 24/7</span>
+        </div>
+    </button>
+
+    <script src="js/chatbot.js"></script>
     <script>
         // Variables globales
         let costoTotalServicio = <?php echo isset($_POST['costo']) ? floatval(preg_replace('/[^0-9.]/', '', $_POST['costo'])) : 0; ?>;
