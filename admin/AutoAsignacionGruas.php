@@ -337,8 +337,15 @@ class AutoAsignacionGruas {
      * Obtener tipo de grúa preferido para un tipo de servicio
      */
     private function obtenerTipoGruaPreferido($tipo_servicio) {
-        $query = "SELECT tipo_grua_preferido FROM configuracion_tipos_servicio 
-                  WHERE tipo_servicio = ? AND activo = 1";
+        // La columna 'activo' puede no existir; validar y construir query acorde
+        $has_activo = $this->conn->query("SHOW COLUMNS FROM configuracion_tipos_servicio LIKE 'activo'");
+        if ($has_activo && $has_activo->num_rows > 0) {
+            $query = "SELECT tipo_grua_preferido FROM configuracion_tipos_servicio 
+                      WHERE tipo_servicio = ? AND activo = 1";
+        } else {
+            $query = "SELECT tipo_grua_preferido FROM configuracion_tipos_servicio 
+                      WHERE tipo_servicio = ?";
+        }
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param("s", $tipo_servicio);
         $stmt->execute();
@@ -390,15 +397,26 @@ class AutoAsignacionGruas {
         
         try {
             // Actualizar solicitud
-            $query = "UPDATE solicitudes SET 
-                      estado = 'asignada',
-                      grua_asignada_id = ?,
-                      fecha_asignacion = NOW(),
-                      metodo_asignacion = 'automatica'
-                      WHERE id = ? AND estado = 'pendiente'";
-            
-            $stmt = $this->conn->prepare($query);
-            $stmt->bind_param("ii", $grua_id, $solicitud_id);
+            // Adaptar si no existe la columna grua_asignada_id
+            $has_col = $this->conn->query("SHOW COLUMNS FROM solicitudes LIKE 'grua_asignada_id'");
+            if ($has_col && $has_col->num_rows > 0) {
+                $query = "UPDATE solicitudes SET 
+                          estado = 'asignada',
+                          grua_asignada_id = ?,
+                          fecha_asignacion = NOW(),
+                          metodo_asignacion = 'automatica'
+                          WHERE id = ? AND IFNULL(estado,'pendiente') = 'pendiente'";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bind_param("ii", $grua_id, $solicitud_id);
+            } else {
+                $query = "UPDATE solicitudes SET 
+                          estado = 'asignada',
+                          fecha_asignacion = NOW(),
+                          metodo_asignacion = 'automatica'
+                          WHERE id = ? AND IFNULL(estado,'pendiente') = 'pendiente'";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bind_param("i", $solicitud_id);
+            }
             
             if (!$stmt->execute()) {
                 throw new Exception("Error al actualizar solicitud: " . $stmt->error);
