@@ -51,18 +51,9 @@ class AutoAsignacionGruas {
             return ['success' => false, 'message' => 'Auto-asignación deshabilitada', 'notificacion' => 'Sistema deshabilitado'];
         }
         
-        // Verificar condiciones climáticas
-        $clima_apto = $this->verificarCondicionesClimaticas();
-        if (!$clima_apto['apto']) {
-            $this->enviarNotificacionUsuario($solicitud_id, 'Servicio suspendido por condiciones climáticas adversas: ' . $clima_apto['razon'], 'danger');
-            $this->registrarEventoSistema($solicitud_id, 'clima_adverso', $clima_apto['razon']);
-            return [
-                'success' => false, 
-                'message' => 'Servicio suspendido por mal clima', 
-                'razon' => $clima_apto['razon'],
-                'notificacion' => 'Clima adverso'
-            ];
-        }
+        // Forzar ignorar clima (modo siempre activo)
+        // $clima_apto = $this->verificarCondicionesClimaticas();
+        // if (!$clima_apto['apto']) { ... }
         
         $inicio_tiempo = microtime(true);
         
@@ -256,6 +247,25 @@ class AutoAsignacionGruas {
             
             $row['distancia'] = $distancia;
             $gruas[] = $row;
+        }
+        
+        // Fallback: si no hay registros en gruas_disponibles, usar tabla gruas directamente
+        if (empty($gruas)) {
+            // Detectar columna de estado ('Estado' o 'estado')
+            $col_estado = 'estado';
+            $chk = $this->conn->query("SHOW COLUMNS FROM gruas LIKE 'Estado'");
+            if ($chk && $chk->num_rows > 0) {
+                $col_estado = 'Estado';
+            }
+            $q2 = "SELECT g.* , 0 as tiene_coordenadas FROM gruas g 
+                   WHERE LOWER($col_estado) IN ('activa','disponible','activo','libre','available')
+                   ORDER BY g.ID DESC";
+            $r2 = $this->conn->query($q2);
+            while ($row = $r2 && $r2->num_rows ? $r2->fetch_assoc() : []) {
+                if (!$row) break;
+                $row['distancia'] = null;
+                $gruas[] = $row;
+            }
         }
         
         return $gruas;
@@ -551,7 +561,13 @@ class AutoAsignacionGruas {
         }
         
         // Usar la misma lógica que procesar-solicitud.php para obtener solicitudes pendientes
-        $query = "SELECT id FROM solicitudes WHERE IFNULL(estado, 'pendiente') = 'pendiente' AND (grua_asignada_id IS NULL OR grua_asignada_id = 0) ORDER BY id DESC LIMIT ?";
+        // Adaptar si no existe grua_asignada_id
+        $has_col = $this->conn->query("SHOW COLUMNS FROM solicitudes LIKE 'grua_asignada_id'");
+        if ($has_col && $has_col->num_rows > 0) {
+            $query = "SELECT id FROM solicitudes WHERE IFNULL(estado, 'pendiente') = 'pendiente' AND (grua_asignada_id IS NULL OR grua_asignada_id = 0) ORDER BY id DESC LIMIT ?";
+        } else {
+            $query = "SELECT id FROM solicitudes WHERE IFNULL(estado, 'pendiente') = 'pendiente' ORDER BY id DESC LIMIT ?";
+        }
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param("i", $limite);
         $stmt->execute();
