@@ -280,7 +280,13 @@ try {
 }
 
 // Obtener solicitudes pendientes con validación (usando la misma lógica que procesar-solicitud.php)
-$query_pendientes = "SELECT COUNT(*) as total FROM solicitudes WHERE IFNULL(estado, 'pendiente') = 'pendiente' AND (grua_asignada_id IS NULL OR grua_asignada_id = 0)";
+// Adaptar si no existe la columna grua_asignada_id
+$col_grua_asignada = $conn->query("SHOW COLUMNS FROM solicitudes LIKE 'grua_asignada_id'");
+if ($col_grua_asignada && $col_grua_asignada->num_rows > 0) {
+    $query_pendientes = "SELECT COUNT(*) as total FROM solicitudes WHERE IFNULL(estado, 'pendiente') = 'pendiente' AND (grua_asignada_id IS NULL OR grua_asignada_id = 0)";
+} else {
+    $query_pendientes = "SELECT COUNT(*) as total FROM solicitudes WHERE IFNULL(estado, 'pendiente') = 'pendiente'";
+}
 $result_pendientes = $conn->query($query_pendientes);
 $solicitudes_pendientes = $result_pendientes ? $result_pendientes->fetch_assoc()['total'] : 0;
 
@@ -482,8 +488,7 @@ $usuario_cargo = $_SESSION['usuario_cargo'] ?? 'Operador';
         <div class="action-buttons">
             <form method="POST" class="action-form">
                 <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
-                <button type="submit" name="procesar_pendientes" class="btn btn-success btn-lg" 
-                        <?php echo ($gruas_disponibles == 0 || $solicitudes_pendientes == 0) ? 'disabled' : ''; ?>
+                <button type="submit" name="procesar_pendientes" class="btn btn-success btn-lg"
                         onclick="return confirm('¿Procesar <?php echo $solicitudes_pendientes; ?> solicitudes pendientes?')">
                     <i class="fas fa-play-circle"></i> Procesar Pendientes
                     <?php if ($solicitudes_pendientes > 0): ?>
